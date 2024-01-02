@@ -219,8 +219,12 @@ def command_option_checker(config):
         unsupportedList = ['userid', 'passwd', 'sshkey_file', 'hostname', 'mount_location']
     elif config['location_type'] in ['usb', 'dvd']:
         raise ParameterError("not supporting the option '%s'" % (config['location_type']))
+    elif config['location_type'] == 'ibmwebsite':
+        mandatoryList = ['ptf']
+        unsupportedList = ['userid', 'passwd', 'sshkey_file', 'hostname', 'mount_location','build_file']
     else:
         raise ParameterError("not supporting the location_type option: '%s'" % (config['location_type']))
+     
 
     collate = []
     for eachMandatory in mandatoryList:
@@ -492,6 +496,10 @@ def update_hmc(module, params):
             otherConfig['-F'] = '/home/{0}/network_install/{1}'.format(hmc_user, iso_file)
         else:
             otherConfig['-F'] = '/{0}/{1}'.format(params['build_config']['build_file'], iso_file)
+            
+    #In case of ibmwebsite, provide the ptf number
+    if locationType == 'ibmwebsite':
+        otherConfig['--PTF'] = params['build_config']['ptf']        
 
     # this option to restart hmc after configuration
     otherConfig['-R'] = " "
