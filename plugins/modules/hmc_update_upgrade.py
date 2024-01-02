@@ -565,13 +565,14 @@ def run_module():
                       ),
         build_config=dict(type='dict',
                           options=dict(
-                              location_type=dict(required=True, type='str', choices=['disk', 'ftp', 'sftp', 'nfs']),
+                              location_type=dict(required=True, type='str', choices=['disk', 'ftp', 'sftp', 'nfs', 'ibmwebsite']),
                               hostname=dict(type='str'),
                               userid=dict(type='str'),
                               passwd=dict(type='str', no_log=True),
                               sshkey_file=dict(type='str'),
                               mount_location=dict(type='str'),
-                              build_file=dict(type='str')
+                              build_file=dict(type='str'),
+                              ptf=dict(type='str')
                           )
                           ),
         state=dict(required=True, type='str',
