@@ -487,9 +487,6 @@ def update_hmc(module, params):
         otherConfig['-L'] = params['build_config']['mount_location']
     if params['build_config']['build_file']:
         otherConfig['-F'] = params['build_config']['build_file']
-    if params['build_config']['ptf']:
-        otherConfig['-F'] = params['build_config']['ptf']
-        
 
     # In case user opt for disk install, then image will be cleared from
     # local location once installed
@@ -502,7 +499,11 @@ def update_hmc(module, params):
             
     #In case of ibmwebsite, provide the ptf number
     if locationType == 'ibmwebsite':
-        otherConfig['--PTF'] = params['build_config']['ptf']        
+        version = hmc.listHMCVersion()
+        if int(version["SERVICEPACK"]) >= 1030:
+            otherConfig['--PTF'] = params['build_config']['ptf']
+        else:
+            raise Error("version should be 1030 or above")      
 
     # this option to restart hmc after configuration
     otherConfig['-R'] = " "
