@@ -29,9 +29,9 @@
         hmc_host: '{{ inventory_hostname }}'
         hmc_auth: '{{ curr_hmc_auth }}'
         build_config: '{{ config }}'
-        state: upgraded
-    register: upgraded_hmc_build_info
+        state: updated
+    register: updated_hmc_build_info
 
   - name: Stdout the upgraded Probed HMC build info
     debug:
-      msg: '{{ upgraded_hmc_build_info }}'
+      msg: '{{ updated_hmc_build_info }}'
