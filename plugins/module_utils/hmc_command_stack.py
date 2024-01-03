@@ -141,7 +141,7 @@ class HmcCommandStack():
                               '--PASSWD': ' --passwd ',
                               '-K': ' -k ',
                               '-L': ' -l ',
-                              '-O': ' -o '
+                              '-O': ' -o ',
                               '--PTF': ' --ptf '},
                    'SAVEUPGDATA': {'-R': {'DISK': ' -r disk ', 'DISKUSB': ' -r diskusb ', 'DISKFTP': ' -r diskftp ', 'DISKSFTP': ' -r disksftp '},
                                    '-H': ' -h ',
