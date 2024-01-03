@@ -487,6 +487,9 @@ def update_hmc(module, params):
         otherConfig['-L'] = params['build_config']['mount_location']
     if params['build_config']['build_file']:
         otherConfig['-F'] = params['build_config']['build_file']
+    if params['build_config']['ptf']:
+        otherConfig['-F'] = params['build_config']['ptf']
+        
 
     # In case user opt for disk install, then image will be cleared from
     # local location once installed
