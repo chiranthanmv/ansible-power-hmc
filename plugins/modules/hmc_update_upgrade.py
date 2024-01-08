@@ -198,7 +198,7 @@ def command_option_checker(config):
     """
     if config['location_type'] in ['ftp', 'sftp']:
         mandatoryList = ['hostname', 'build_file', 'userid', 'passwd']
-        unsupportedList = ['mount_location']
+        unsupportedList = ['mount_location','ptf']
 
         if config['location_type'] == 'sftp':
             if not (config['sshkey_file'] or config['passwd']):
@@ -213,10 +213,10 @@ def command_option_checker(config):
 
     elif config['location_type'] == 'nfs':
         mandatoryList = ['hostname', 'build_file', 'mount_location']
-        unsupportedList = ['userid', 'passwd', 'sshkey_file']
+        unsupportedList = ['userid', 'passwd', 'sshkey_file','ptf']
     elif config['location_type'] == 'disk':
         mandatoryList = ['build_file']
-        unsupportedList = ['userid', 'passwd', 'sshkey_file', 'hostname', 'mount_location']
+        unsupportedList = ['userid', 'passwd', 'sshkey_file', 'hostname', 'mount_location','ptf']
     elif config['location_type'] in ['usb', 'dvd']:
         raise ParameterError("not supporting the option '%s'" % (config['location_type']))
     elif config['location_type'] == 'ibmwebsite':
@@ -360,6 +360,9 @@ def upgrade_hmc(module, params):
 
     if not params['build_config']:
         raise ParameterError("missing options on build_config")
+        
+    if params['build_config']['ptf']:
+        raise ParameterError("unsupported parameters: ptf")
 
     hmc_conn = HmcCliConnection(module, hmc_host, hmc_user, password)
     hmc = Hmc(hmc_conn)
