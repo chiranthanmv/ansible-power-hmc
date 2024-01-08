@@ -360,9 +360,6 @@ def upgrade_hmc(module, params):
 
     if not params['build_config']:
         raise ParameterError("missing options on build_config")
-        
-    if params['build_config']['ptf']:
-        raise ParameterError("unsupported parameters: ptf")
 
     hmc_conn = HmcCliConnection(module, hmc_host, hmc_user, password)
     hmc = Hmc(hmc_conn)
@@ -370,7 +367,10 @@ def upgrade_hmc(module, params):
     command_option_checker(params['build_config'])
 
     locationType = params['build_config']['location_type']
-
+    
+    if locationType == 'ibmwebsite':
+        raise ParameterError("Upgrade through ibmwebsite is not supported ")
+        
     if locationType == 'disk':
         is_img_in_hmc = check_image_in_hmc(module, params)
         if not is_img_in_hmc:
@@ -506,7 +506,7 @@ def update_hmc(module, params):
         if int(version["SERVICEPACK"]) >= 1030:
             otherConfig['--PTF'] = params['build_config']['ptf']
         else:
-            raise Error("version should be 1030 or above")      
+            raise VersionError("Update through ibmwebsite supported from 1030 version onwards.")      
 
     # this option to restart hmc after configuration
     otherConfig['-R'] = " "
