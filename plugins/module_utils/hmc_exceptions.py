@@ -51,3 +51,11 @@ class HmcError(Error):
                 return "HmcError: {0}".format(self.message.encode('utf-8'))
             else:
                 return "HmcError: {0}".format(self.message)
+            
+class VersionError(Error):
+    """
+    Indicates an error with the module input parameters.
+    """
+    def __repr__(self):
+        if self.message:
+            return "VersionError: {0}".format(self.message)
