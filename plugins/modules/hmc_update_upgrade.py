@@ -31,6 +31,7 @@ description:
     - Upgrades the HMC by obtaining  the required  files  from a remote server or from the HMC hard disk. The files are transferred
       onto a special partition on the HMC hard disk. After the files have been transferred, HMC will boot from this partition
       and perform the upgrade.
+    - Update the HMC using the PTF from IBMWEBSITE
 version_added: 1.0.0
 requirements:
 - Python >= 3
@@ -70,7 +71,7 @@ options:
                       if it doesn't exist then it looks for C(build_file) in the Ansible Controller node.
                 type: str
                 required: true
-                choices: ['disk', 'ftp', 'sftp', 'nfs']
+                choices: ['disk', 'ftp', 'sftp', 'nfs', 'ibmwebsite']
             hostname:
                 description:
                     - The hostname or IPaddress of the remote server where the corrective
@@ -107,6 +108,11 @@ options:
                       image is kept.
                       During update of the HMC if I(location_type=disk) and ISO image is kept in Ansible controller node or HMC hard disk,
                       this option should be provided with the ansible control node path in which ISO file or network install image is kept.
+                type: str
+             ptf:
+                description:
+                    - The name of the PTF to install.
+                      This option is required when the ISO image is located on the IBM Fix Central website. Otherwise, this option is not valid.
                 type: str
     state:
         description:
@@ -154,7 +160,17 @@ EXAMPLES = '''
           passwd: <SFTP_Server_Password>
           build_file: /Images/MF71190-10.2.1041.0-2308160028-x86_64.iso
       state: updated
-
+      
+- name: Update the HMC to the V10R2M1041(ifix) build level from ibmwebsite
+  hmc_update_upgrade:
+      hmc_host: '{{ inventory_hostname }}'
+      hmc_auth:
+         username: '{{ ansible_user }}'
+         password: '{{ hmc_password }}'
+      build_config:
+          location_type: ibmwebsite
+          ptf: vMF71409
+      state: updated
 '''
 
 RETURN = '''
