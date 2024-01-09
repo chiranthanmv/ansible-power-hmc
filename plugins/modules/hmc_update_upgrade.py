@@ -31,7 +31,7 @@ description:
     - Upgrades the HMC by obtaining  the required  files  from a remote server or from the HMC hard disk. The files are transferred
       onto a special partition on the HMC hard disk. After the files have been transferred, HMC will boot from this partition
       and perform the upgrade.
-    - Update the HMC using the PTF from IBMWEBSITE
+    - Update the HMC from IBM Fix Central website
 version_added: 1.0.0
 requirements:
 - Python >= 3
@@ -113,6 +113,7 @@ options:
                 description:
                     - The name of the PTF to install.
                       This option is required when the ISO image is located on the IBM Fix Central website. Otherwise, this option is not valid.
+                      This option is required only when the location_type is 'ibmwebsite'
                 type: str
     state:
         description:
@@ -516,18 +517,17 @@ def update_hmc(module, params):
         else:
             otherConfig['-F'] = '/{0}/{1}'.format(params['build_config']['build_file'], iso_file)
             
+    initial_version_details = hmc.listHMCVersion()
+            
     #In case of ibmwebsite, provide the ptf number
     if locationType == 'ibmwebsite':
-        version = hmc.listHMCVersion()
-        if int(version["SERVICEPACK"]) >= 1030:
+        if int(initial_version_details["SERVICEPACK"]) >= 1030:
             otherConfig['--PTF'] = params['build_config']['ptf']
         else:
             raise VersionError("Update through ibmwebsite supported from 1030 version onwards.")      
 
     # this option to restart hmc after configuration
     otherConfig['-R'] = " "
-
-    initial_version_details = hmc.listHMCVersion()
 
     hmc.updateHMC(locationType, configDict=otherConfig)
     version_details = {}
