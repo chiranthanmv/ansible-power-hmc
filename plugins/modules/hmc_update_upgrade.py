@@ -187,6 +187,7 @@ from ansible_collections.ibm.power_hmc.plugins.module_utils.hmc_resource import 
 from ansible_collections.ibm.power_hmc.plugins.module_utils.hmc_exceptions import ParameterError
 from ansible_collections.ibm.power_hmc.plugins.module_utils.hmc_exceptions import Error
 from ansible_collections.ibm.power_hmc.plugins.module_utils.hmc_exceptions import HmcError
+from ansible_collections.ibm.power_hmc.plugins.module_utils.hmc_exceptions import VersionError
 import sys
 import logging
 LOG_FILENAME = "/tmp/ansible_power_hmc.log"
