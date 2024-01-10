@@ -365,6 +365,25 @@ def facts(module, params):
     version_details = hmc.listHMCVersion()
     return changed, version_details, None
 
+def list_ptf(module, params):
+    hmc_host = params['hmc_host']
+    hmc_user = params['hmc_auth']['username']
+    password = params['hmc_auth']['password']
+    changed = False
+    hmc_conn = None
+
+    hmc_conn = HmcCliConnection(module, hmc_host, hmc_user, password)
+    hmc = Hmc(hmc_conn)
+
+    if not params['build_config']['location_type']:
+        raise ParameterError("mandatory parameter 'location_type' is missing")
+    locationType = params['build_config']['location_type']
+    if locationType == 'ibmwebsite':
+        ptf_details = hmc.listptfHMC(locationType)
+    else:
+        raise ParameterError("listptf is supported only for location type 'ibmwebsite'")
+    return changed, ptf_details, None
+
 
 def upgrade_hmc(module, params):
     hmc_host = params['hmc_host']
@@ -559,7 +578,16 @@ def perform_task(module):
         "updated": update_hmc,
         "facts": facts,
         "upgraded": upgrade_hmc,
+        "listptf": list_ptf,
     }
+    
+    oper = 'state'
+    if params['state'] is None:
+        oper = 'action'
+    try:
+        return actions[params[oper]](module, params)
+    except (ParameterError, HmcError, Error) as error:
+        return False, repr(error), None
 
     if not params['hmc_auth']:
         return False, "missing credential info", None
@@ -601,13 +629,15 @@ def run_module():
                           ),
         state=dict(required=True, type='str',
                    choices=['updated', 'upgraded', 'facts'])
+        action=dict(type='str', choices=['listptf'])
     )
 
     module = AnsibleModule(
         argument_spec=module_args,
         required_if=[['state', 'facts', ['hmc_host', 'hmc_auth']],
                      ['state', 'updated', ['hmc_host', 'hmc_auth', 'build_config']],
-                     ['state', 'upgraded', ['hmc_host', 'hmc_auth', 'build_config']]
+                     ['state', 'upgraded', ['hmc_host', 'hmc_auth', 'build_config']],
+                     ['action', 'listptf', ['hmc_host', 'hmc_auth', 'location_type']],
                      ]
     )
 
