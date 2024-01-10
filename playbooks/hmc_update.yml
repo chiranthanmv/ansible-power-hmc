@@ -1,0 +1,37 @@
+- name: Demo HMC upgrade
+  hosts: hmcs
+  collections:
+      - ibm.power_hmc
+  connection: local
+  gather_facts: no
+  vars:
+      curr_hmc_auth:
+        username: "hscroot"
+        password: abc123
+      config:
+        location_type: ibmwebsite
+        ptf: vMF71299
+  tasks:
+
+  - name: List the HMC current build level
+    hmc_update_upgrade:
+        hmc_host: '{{ inventory_hostname }}'
+        hmc_auth: '{{ curr_hmc_auth }}'
+        state: facts
+    register: build_info
+
+  - name: Stdout the probed HMC build info
+    debug:
+      msg: '{{ build_info }}'
+
+  - name: List all ptf available
+    hmc_update_upgrade:
+        hmc_host: '{{ inventory_hostname }}'
+        hmc_auth: '{{ curr_hmc_auth }}'
+        build_config: '{{ config }}'
+        action: listptf
+    register: updated_hmc_build_info
+
+  - name: Stdout the upgraded Probed HMC build info
+    debug:
+      msg: '{{ updated_hmc_build_info }}'
