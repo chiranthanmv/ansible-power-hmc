@@ -628,7 +628,7 @@ def run_module():
                           )
                           ),
         state=dict(required=True, type='str',
-                   choices=['updated', 'upgraded', 'facts'])
+                   choices=['updated', 'upgraded', 'facts']),
         action=dict(type='str', choices=['listptf'])
     )
 
