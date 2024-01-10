@@ -374,12 +374,17 @@ def list_ptf(module, params):
 
     hmc_conn = HmcCliConnection(module, hmc_host, hmc_user, password)
     hmc = Hmc(hmc_conn)
-
+    initial_version_details = hmc.listHMCVersion()
+    
     if not params['build_config']['location_type']:
         raise ParameterError("mandatory parameter 'location_type' is missing")
+        
     locationType = params['build_config']['location_type']
     if locationType == 'ibmwebsite':
-        ptf_details = hmc.listptfHMC(locationType)
+        if int(initial_version_details["SERVICEPACK"]) < 1030:
+            raise VersionError("Update through ibmwebsite supported from 1030 version onwards.")
+        else:
+            ptf_details = hmc.listptfHMC(locationType)
     else:
         raise ParameterError("listptf is supported only for location type 'ibmwebsite'")
     return changed, ptf_details, None
