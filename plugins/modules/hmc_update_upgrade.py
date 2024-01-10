@@ -382,7 +382,7 @@ def list_ptf(module, params):
     locationType = params['build_config']['location_type']
     if locationType == 'ibmwebsite':
         if int(initial_version_details["SERVICEPACK"]) < 1030:
-            raise VersionError("Update through ibmwebsite supported from 1030 version onwards.")
+            raise VersionError("List ptf is supported from 1030 version onwards.")
         else:
             ptf_details = hmc.listptfHMC(locationType)
     else:
