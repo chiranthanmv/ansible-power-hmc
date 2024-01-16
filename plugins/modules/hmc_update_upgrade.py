@@ -638,6 +638,8 @@ def run_module():
 
     module = AnsibleModule(
         argument_spec=module_args,
+        mutually_exclusive=[('state', 'action')],
+        required_one_of=[('state', 'action')],
         required_if=[['state', 'facts', ['hmc_host', 'hmc_auth']],
                      ['state', 'updated', ['hmc_host', 'hmc_auth', 'build_config']],
                      ['state', 'upgraded', ['hmc_host', 'hmc_auth', 'build_config']],
