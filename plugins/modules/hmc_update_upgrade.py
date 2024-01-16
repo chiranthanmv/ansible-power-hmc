@@ -121,9 +121,13 @@ options:
             - C(facts) does not change anything on the HMC and returns current driver/build level of HMC.
             - C(updated) ensures the target HMC is updated with given corrective service ISO image.
             - C(upgraded) ensures the target HMC is upgraded with given upgrade files.
-        required: true
         type: str
         choices: ['facts', 'updated', 'upgraded']
+    action:
+       description:
+           - c(listptf) lists available Hardware Management Console (HMC) updates from the IBM Fix Central website.
+       type: str
+       choices: ['listptf']
 '''
 
 EXAMPLES = '''
@@ -161,6 +165,14 @@ EXAMPLES = '''
           passwd: <SFTP_Server_Password>
           build_file: /Images/MF71190-10.2.1041.0-2308160028-x86_64.iso
       state: updated
+      
+- name: List all the available ptfs 
+  hmc_update_upgrade:
+      hmc_host: '{{ inventory_hostname }}'
+      hmc_auth:
+         username: '{{ ansible_user }}'
+         password: '{{ hmc_password }}'
+      action: listptf
       
 - name: Update the HMC to the V10R2M1041(ifix) build level from ibmwebsite
   hmc_update_upgrade:
