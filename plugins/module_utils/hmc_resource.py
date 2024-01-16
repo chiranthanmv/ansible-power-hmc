@@ -170,7 +170,7 @@ class Hmc():
         result = self.hmcconn.execute(hmcCmd)
         return result
 
-    def listptfHMC(self, locationType, configDict=None):
+    def listHMCPTF(self, locationType, configDict=None):
         hmcCmd = self.CMD['LSUPDHMC'] + \
             self.OPT['LSUPDHMC']['-T'][locationType.upper()]
 
