@@ -384,7 +384,7 @@ def list_ptf(module, params):
         if int(initial_version_details["SERVICEPACK"]) < 1030:
             raise VersionError("List ptf is supported from 1030 version onwards.")
         else:
-            ptf_details = hmc.listptfHMC(locationType)
+            ptf_details = hmc.listHMCPTF(locationType)
     else:
         raise ParameterError("listptf is supported only for location type 'ibmwebsite'")
     return changed, ptf_details, None
