@@ -641,7 +641,7 @@ def run_module():
         required_if=[['state', 'facts', ['hmc_host', 'hmc_auth']],
                      ['state', 'updated', ['hmc_host', 'hmc_auth', 'build_config']],
                      ['state', 'upgraded', ['hmc_host', 'hmc_auth', 'build_config']],
-                     ['action', 'listptf', ['hmc_host', 'hmc_auth', 'build_config']],
+                     ['action', 'listptf', ['hmc_host', 'hmc_auth']],
                      ]
     )
 
