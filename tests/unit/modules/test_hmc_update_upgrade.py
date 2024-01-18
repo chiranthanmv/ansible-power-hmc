@@ -135,28 +135,28 @@ test_data = [
 
     # All ibmwebsite related testdata
     # host name is mentioned in ibmwebsite
-    ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'ibmwebsite', 'build_file': 'path', 'hostname': '0.0.0.0', \
-      'mount_location': None, 'userid': None, 'passwd': None, 'sshkey_file': None, 'ptf': 'None', 'restart': None}}, "ParameterError: unsupported parameter: hostname"),
+    ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'ibmwebsite', 'ptf': 'data', 'hostname': '0.0.0.0', \
+      'mount_location': None, 'userid': None, 'passwd': None, 'sshkey_file': None, 'build_file': None, 'restart': None}}, "ParameterError: unsupported parameter: hostname"),
 
     # userid is mentioned in ibmwebsite
-    ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'ibmwebsite', 'build_file': 'path', 'hostname': None, 'mount_location': None, \
-      'userid': 'data', 'passwd': None, 'sshkey_file': None, 'ptf': 'None', 'restart': None}}, "ParameterError: unsupported parameter: userid"),
+    ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'ibmwebsite', 'ptf': 'data', 'hostname': None, 'mount_location': None, \
+      'userid': 'data', 'passwd': None, 'sshkey_file': None, 'build_file': None, 'restart': None}}, "ParameterError: unsupported parameter: userid"),
 
     # password is mentioned in ibmwebsite
-    ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'ibmwebsite', 'build_file': 'path', 'hostname': None, 'mount_location': None, \
-      'userid': None, 'passwd': 'data', 'sshkey_file': None, 'ptf': 'None', 'restart': None}}, "ParameterError: unsupported parameter: passwd"),
+    ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'ibmwebsite', 'ptf': 'data', 'hostname': None, 'mount_location': None, \
+      'userid': None, 'passwd': 'data', 'sshkey_file': None, 'build_file': None, 'restart': None}}, "ParameterError: unsupported parameter: passwd"),
 
     # sshkey_file is mentioned in ibmwebiste
-    ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'ibmwebsite', 'build_file': 'path', 'hostname': None, 'mount_location': None, \
-      'userid': None, 'passwd': None, 'sshkey_file': 'data', 'ptf': 'None', 'restart': None}}, "ParameterError: unsupported parameter: sshkey_file"),
+    ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'ibmwebsite', 'ptf': 'data', 'hostname': None, 'mount_location': None, \
+      'userid': None, 'passwd': None, 'sshkey_file': 'data', 'build_file': None, 'restart': None}}, "ParameterError: unsupported parameter: sshkey_file"),
 
     # mount location is mentioned in ibmwebsite
-    ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'ibmwebsite', 'build_file': 'path', 'hostname': None, 'mount_location': 'data', \
-      'userid': None, 'passwd': None, 'sshkey_file': None, 'ptf': 'None', 'restart': None}}, "ParameterError: unsupported parameter: mount_location"),
+    ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'ibmwebsite', 'ptf': 'data', 'hostname': None, 'mount_location': 'data', \
+      'userid': None, 'passwd': None, 'sshkey_file': None, 'build_file': None, 'restart': None}}, "ParameterError: unsupported parameter: mount_location"),
 
     # ptf is not mentioned in ibmwebsite
-    ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'ibmwebsite', 'build_file': None, 'hostname': None, 'mount_location': None, \
-      'userid': None, 'passwd': None, 'sshkey_file': None, 'ptf': None, 'restart': None}}, \
+    ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'ibmwebsite', 'ptf': None, 'hostname': None, 'mount_location': None, \
+      'userid': None, 'passwd': None, 'sshkey_file': None, 'build_file': None, 'restart': None}}, \
      "ParameterError: mandatory parameter 'ptf' is missing"),
 
     # unsupported location_type
