@@ -127,7 +127,7 @@ test_data = [
     # All disk related testdata
     # host name is mentioned in disk
     ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'disk', 'build_file': 'path', 'hostname': '0.0.0.0', \
-      'mount_location': None, 'userid': None, 'passwd': None, 'sshkey_file': None, 'ptf': None, 'restart': None}}, 
+      'mount_location': None, 'userid': None, 'passwd': None, 'sshkey_file': None, 'ptf': None, 'restart': None}}, \
      "ParameterError: unsupported parameter: hostname"),
 
     # userid is mentioned in nfs
@@ -188,7 +188,8 @@ test_data = [
      "ParameterError: not supporting the location_type option: 'nfssed'"),
 
     ({'hmc_host': "0.0.0.10", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'usb', 'build_file': 'path', 'hostname': '0.0.0.0', \
-      'mount_location': 'data', 'userid': None, 'passwd': None, 'sshkey_file': None, 'ptf': None, 'restart': None}}, "ParameterError: not supporting the option 'usb'"),
+      'mount_location': 'data', 'userid': None, 'passwd': None, 'sshkey_file': None, 'ptf': None, 'restart': None}}, \
+     "ParameterError: not supporting the option 'usb'"),
 
     ({'hmc_host': "0.0.0.10", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'dvd', 'build_file': 'path', 'hostname': '0.0.0.0', \
       'mount_location': 'data', 'userid': None, 'passwd': None, 'sshkey_file': None, 'ptf': None, 'restart': None}}, \
