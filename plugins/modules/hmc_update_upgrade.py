@@ -165,7 +165,7 @@ EXAMPLES = '''
           passwd: <SFTP_Server_Password>
           build_file: /Images/MF71190-10.2.1041.0-2308160028-x86_64.iso
       state: updated
-      
+
 - name: List all the available ptfs 
   hmc_update_upgrade:
       hmc_host: '{{ inventory_hostname }}'
@@ -214,7 +214,7 @@ def init_logger():
         format='[%(asctime)s] %(levelname)s: [%(funcName)s] %(message)s',
         level=logging.DEBUG)
 
-
+    
 def compare_version(initial_version_details, version_details):
     if initial_version_details == version_details:
         return False
@@ -228,7 +228,7 @@ def command_option_checker(config):
     """
     if config['location_type'] in ['ftp', 'sftp']:
         mandatoryList = ['hostname', 'build_file', 'userid', 'passwd']
-        unsupportedList = ['mount_location','ptf']
+        unsupportedList = ['mount_location', 'ptf']
 
         if config['location_type'] == 'sftp':
             if not (config['sshkey_file'] or config['passwd']):
@@ -243,15 +243,15 @@ def command_option_checker(config):
 
     elif config['location_type'] == 'nfs':
         mandatoryList = ['hostname', 'build_file', 'mount_location']
-        unsupportedList = ['userid', 'passwd', 'sshkey_file','ptf']
+        unsupportedList = ['userid', 'passwd', 'sshkey_file', 'ptf']
     elif config['location_type'] == 'disk':
         mandatoryList = ['build_file']
-        unsupportedList = ['userid', 'passwd', 'sshkey_file', 'hostname', 'mount_location','ptf']
+        unsupportedList = ['userid', 'passwd', 'sshkey_file', 'hostname', 'mount_location', 'ptf']
     elif config['location_type'] in ['usb', 'dvd']:
         raise ParameterError("not supporting the option '%s'" % (config['location_type']))
     elif config['location_type'] == 'ibmwebsite':
         mandatoryList = ['ptf']
-        unsupportedList = ['userid', 'passwd', 'sshkey_file', 'hostname', 'mount_location','build_file']
+        unsupportedList = ['userid', 'passwd', 'sshkey_file', 'hostname', 'mount_location', 'build_file']
     else:
         raise ParameterError("not supporting the location_type option: '%s'" % (config['location_type']))
      
@@ -384,14 +384,14 @@ def list_ptf(module, params):
     changed = False
     hmc_conn = None
     ptf_details = None
-    
+
     if params['build_config']:
         raise ParameterError("not supporting build_config option")
 
     hmc_conn = HmcCliConnection(module, hmc_host, hmc_user, password)
     hmc = Hmc(hmc_conn)
     initial_version_details = hmc.listHMCVersion()
-        
+
     if int(initial_version_details["SERVICEPACK"]) < 1030:
         raise VersionError("List ptf is supported from 1030 version onwards.")
     else:
@@ -551,10 +551,10 @@ def update_hmc(module, params):
             otherConfig['-F'] = '/home/{0}/network_install/{1}'.format(hmc_user, iso_file)
         else:
             otherConfig['-F'] = '/{0}/{1}'.format(params['build_config']['build_file'], iso_file)
-            
+
     initial_version_details = hmc.listHMCVersion()
             
-    #In case of ibmwebsite, provide the ptf number
+    # In case of ibmwebsite, provide the ptf number
     if locationType == 'ibmwebsite':
         if int(initial_version_details["SERVICEPACK"]) >= 1030:
             otherConfig['--PTF'] = params['build_config']['ptf']
@@ -595,7 +595,7 @@ def perform_task(module):
         "upgraded": upgrade_hmc,
         "listptf": list_ptf,
     }
-    
+
     oper = 'state'
     if params['state'] is None:
         oper = 'action'
@@ -642,7 +642,7 @@ def run_module():
                               ptf=dict(type='str')
                           )
                           ),
-        state=dict( type='str', choices=['updated', 'upgraded', 'facts']),
+        state=dict(type='str', choices=['updated', 'upgraded', 'facts']),
         action=dict(type='str', choices=['listptf'])
     )
 
