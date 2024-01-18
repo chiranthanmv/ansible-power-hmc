@@ -40,7 +40,7 @@ test_data = [
     # ptf are mentioned in sftp
     ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'sftp', 'build_file': 'path', 'hostname': '0.0.0.0', \
       'mount_location': None, 'userid': 'test', 'passwd': 'data', 'sshkey_file': None, 'ptf': 'data', 'restart': None}}, \
-     "ParameterError: unsupported parameter: mount_location"),
+     "ParameterError: unsupported parameter: ptf"),
 
     # build_file is not mentioned in sftp
     ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'sftp', 'build_file': None, 'hostname': '0.0.0.0', \
@@ -71,7 +71,7 @@ test_data = [
     # ptf are mentioned in ftp
     ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'ftp', 'build_file': 'path', 'hostname': '0.0.0.0', \
       'mount_location': None, 'userid': 'test', 'passwd': 'data', 'sshkey_file': None, 'ptf': 'data', 'restart': None}}, \
-     "ParameterError: unsupported parameter: mount_location"),
+     "ParameterError: unsupported parameter: ptf"),
 
     # hostname is not mentioned in ftp
     ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'ftp', 'build_file': 'path', 'hostname': None, 'mount_location': 'data', \
@@ -107,10 +107,10 @@ test_data = [
       'mount_location': None, 'userid': None, 'passwd': None, 'sshkey_file': None, 'ptf': None, 'restart': None}}, \
      "ParameterError: mandatory parameter 'mount_location' is missing"),
 
-    # ptf is missing in nfs
+    # ptf is mentioned in nfs
     ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'nfs', 'build_file': 'path', 'hostname': '0.0.0.0', \
       'mount_location': 'data', 'userid': None, 'passwd': None, 'sshkey_file': None, 'ptf': 'data', 'restart': None}}, \
-     "ParameterError: mandatory parameter 'mount_location' is missing"),
+     "ParameterError: mandatory parameter 'ptf' is missing"),
 
     # hostname is not mentioned in nfs
     ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'nfs', 'build_file': 'path', 'hostname': None, 'mount_location': 'data', \
@@ -145,7 +145,7 @@ test_data = [
 
     # ptf is mentioned in disk
     ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'disk', 'build_file': 'path', 'hostname': None, 'mount_location': None, \
-      'userid': None, 'passwd': None, 'sshkey_file': None, 'ptf': 'data', 'restart': None}}, "ParameterError: unsupported parameter: passwd"),
+      'userid': None, 'passwd': None, 'sshkey_file': None, 'ptf': 'data', 'restart': None}}, "ParameterError: unsupported parameter: ptf"),
 
     # build_file is not mentioned in disk
     ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'disk', 'build_file': None, 'hostname': None, 'mount_location': None, \
