@@ -133,6 +133,32 @@ test_data = [
       'userid': None, 'passwd': None, 'sshkey_file': None, 'ptf': None, 'restart': None}}, \
      "ParameterError: mandatory parameter 'build_file' is missing"),
 
+    # All ibmwebsite related testdata
+    # host name is mentioned in ibmwebsite
+    ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'ibmwebiste', 'build_file': 'path', 'hostname': '0.0.0.0', \
+      'mount_location': None, 'userid': None, 'passwd': None, 'sshkey_file': None, 'ptf': None, 'restart': None}}, "ParameterError: unsupported parameter: hostname"),
+
+    # userid is mentioned in ibmwebsite
+    ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'ibmwebiste', 'build_file': 'path', 'hostname': None, 'mount_location': None, \
+      'userid': 'data', 'passwd': None, 'sshkey_file': None, 'ptf': None, 'restart': None}}, "ParameterError: unsupported parameter: userid"),
+
+    # password is mentioned in ibmwebiste
+    ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'ibmwebiste', 'build_file': 'path', 'hostname': None, 'mount_location': None, \
+      'userid': None, 'passwd': 'data', 'sshkey_file': None, 'ptf': None, 'restart': None}}, "ParameterError: unsupported parameter: passwd"),
+
+    # sshkey_file is mentioned in ibmwebiste
+    ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'ibmwebiste', 'build_file': 'path', 'hostname': None, 'mount_location': None, \
+      'userid': None, 'passwd': None, 'sshkey_file': 'data', 'ptf': None, 'restart': None}}, "ParameterError: unsupported parameter: sshkey_file"),
+
+    # mount location is mentioned in ibmwebiste
+    ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'ibmwebiste', 'build_file': 'path', 'hostname': None, 'mount_location': 'data', \
+      'userid': None, 'passwd': None, 'sshkey_file': None, 'ptf': None, 'restart': None}}, "ParameterError: unsupported parameter: mount_location"),
+
+    # build_file is not mentioned in ibmwebiste
+    ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'ibmwebiste', 'build_file': None, 'hostname': None, 'mount_location': None, \
+      'userid': None, 'passwd': None, 'sshkey_file': None, 'ptf': None, 'restart': None}}, \
+     "ParameterError: mandatory parameter 'ptf' is missing"),
+
     # unsupported location_type
     ({'hmc_host': "0.0.0.10", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'nfssed', 'build_file': 'path', 'hostname': '0.0.0.0', \
       'mount_location': 'data', 'userid': None, 'passwd': None, 'sshkey_file': None, 'ptf': None, 'restart': None}}, \
