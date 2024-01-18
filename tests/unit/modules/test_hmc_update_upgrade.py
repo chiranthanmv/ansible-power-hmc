@@ -110,7 +110,7 @@ test_data = [
     # ptf is mentioned in nfs
     ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'nfs', 'build_file': 'path', 'hostname': '0.0.0.0', \
       'mount_location': 'data', 'userid': None, 'passwd': None, 'sshkey_file': None, 'ptf': 'data', 'restart': None}}, \
-     "ParameterError: mandatory parameter 'ptf' is missing"),
+     "ParameterError: unsupported parameter: ptf"),
 
     # hostname is not mentioned in nfs
     ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'nfs', 'build_file': 'path', 'hostname': None, 'mount_location': 'data', \
