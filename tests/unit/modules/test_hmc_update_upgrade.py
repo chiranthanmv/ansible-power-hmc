@@ -91,11 +91,13 @@ test_data = [
 
     # userid is mentioned in nfs
     ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'nfs', 'build_file': 'path', 'hostname': '0.0.0.0', \
-      'mount_location': 'data', 'userid': 'data', 'passwd': None, 'sshkey_file': None, 'ptf': None, 'restart': None}}, "ParameterError: unsupported parameter: userid"),
+      'mount_location': 'data', 'userid': 'data', 'passwd': None, 'sshkey_file': None, 'ptf': None, 'restart': None}},
+     "ParameterError: unsupported parameter: userid"),
 
     # password is mentioned in nfs
     ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'nfs', 'build_file': 'path', 'hostname': '0.0.0.0', \
-      'mount_location': 'data', 'userid': None, 'passwd': 'data', 'sshkey_file': None, 'ptf': None, 'restart': None}}, "ParameterError: unsupported parameter: passwd"),
+      'mount_location': 'data', 'userid': None, 'passwd': 'data', 'sshkey_file': None, 'ptf': None, 'restart': None}}, 
+     "ParameterError: unsupported parameter: passwd"),
 
     # sshkey_file is mentioned in nfs
     ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'nfs', 'build_file': 'path', 'hostname': '0.0.0.0', \
@@ -125,7 +127,8 @@ test_data = [
     # All disk related testdata
     # host name is mentioned in disk
     ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'disk', 'build_file': 'path', 'hostname': '0.0.0.0', \
-      'mount_location': None, 'userid': None, 'passwd': None, 'sshkey_file': None, 'ptf': None, 'restart': None}}, "ParameterError: unsupported parameter: hostname"),
+      'mount_location': None, 'userid': None, 'passwd': None, 'sshkey_file': None, 'ptf': None, 'restart': None}}, 
+     "ParameterError: unsupported parameter: hostname"),
 
     # userid is mentioned in nfs
     ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'disk', 'build_file': 'path', 'hostname': None, 'mount_location': None, \
@@ -155,7 +158,8 @@ test_data = [
     # All ibmwebsite related testdata
     # host name is mentioned in ibmwebsite
     ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'ibmwebsite', 'ptf': 'data', 'hostname': '0.0.0.0', \
-      'mount_location': None, 'userid': None, 'passwd': None, 'sshkey_file': None, 'build_file': None, 'restart': None}}, "ParameterError: unsupported parameter: hostname"),
+      'mount_location': None, 'userid': None, 'passwd': None, 'sshkey_file': None, 'build_file': None, 'restart': None}},
+     "ParameterError: unsupported parameter: hostname"),
 
     # userid is mentioned in ibmwebsite
     ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'ibmwebsite', 'ptf': 'data', 'hostname': None, 'mount_location': None, \
@@ -184,7 +188,8 @@ test_data = [
      "ParameterError: not supporting the location_type option: 'nfssed'"),
 
     ({'hmc_host': "0.0.0.10", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'usb', 'build_file': 'path', 'hostname': '0.0.0.0', \
-      'mount_location': 'data', 'userid': None, 'passwd': None, 'sshkey_file': None, 'ptf': None, 'restart': None}}, "ParameterError: not supporting the option 'usb'"),
+      'mount_location': 'data', 'userid': None, 'passwd': None, 'sshkey_file': None, 'ptf': None, 'restart': None}}, 
+     "ParameterError: not supporting the option 'usb'"),
 
     ({'hmc_host': "0.0.0.10", 'hmc_auth': hmc_auth, 'build_config': {'location_type': 'dvd', 'build_file': 'path', 'hostname': '0.0.0.0', \
       'mount_location': 'data', 'userid': None, 'passwd': None, 'sshkey_file': None, 'ptf': None, 'restart': None}}, \
