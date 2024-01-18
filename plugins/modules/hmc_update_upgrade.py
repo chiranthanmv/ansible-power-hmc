@@ -166,14 +166,14 @@ EXAMPLES = '''
           build_file: /Images/MF71190-10.2.1041.0-2308160028-x86_64.iso
       state: updated
 
-- name: List all the available ptfs 
+- name: List all the available ptfs
   hmc_update_upgrade:
       hmc_host: '{{ inventory_hostname }}'
       hmc_auth:
          username: '{{ ansible_user }}'
          password: '{{ hmc_password }}'
       action: listptf
-      
+
 - name: Update the HMC to the V10R2M1041(ifix) build level from ibmwebsite
   hmc_update_upgrade:
       hmc_host: '{{ inventory_hostname }}'
@@ -214,7 +214,7 @@ def init_logger():
         format='[%(asctime)s] %(levelname)s: [%(funcName)s] %(message)s',
         level=logging.DEBUG)
 
-    
+
 def compare_version(initial_version_details, version_details):
     if initial_version_details == version_details:
         return False
@@ -254,7 +254,6 @@ def command_option_checker(config):
         unsupportedList = ['userid', 'passwd', 'sshkey_file', 'hostname', 'mount_location', 'build_file']
     else:
         raise ParameterError("not supporting the location_type option: '%s'" % (config['location_type']))
-     
 
     collate = []
     for eachMandatory in mandatoryList:
@@ -377,6 +376,7 @@ def facts(module, params):
     version_details = hmc.listHMCVersion()
     return changed, version_details, None
 
+
 def list_ptf(module, params):
     hmc_host = params['hmc_host']
     hmc_user = params['hmc_auth']['username']
@@ -419,10 +419,10 @@ def upgrade_hmc(module, params):
     command_option_checker(params['build_config'])
 
     locationType = params['build_config']['location_type']
-    
+
     if locationType == 'ibmwebsite':
         raise ParameterError("Upgrade through ibmwebsite is not supported ")
-        
+ 
     if locationType == 'disk':
         is_img_in_hmc = check_image_in_hmc(module, params)
         if not is_img_in_hmc:
@@ -553,13 +553,13 @@ def update_hmc(module, params):
             otherConfig['-F'] = '/{0}/{1}'.format(params['build_config']['build_file'], iso_file)
 
     initial_version_details = hmc.listHMCVersion()
-            
+     
     # In case of ibmwebsite, provide the ptf number
     if locationType == 'ibmwebsite':
         if int(initial_version_details["SERVICEPACK"]) >= 1030:
             otherConfig['--PTF'] = params['build_config']['ptf']
         else:
-            raise VersionError("Update through ibmwebsite supported from 1030 version onwards.")      
+            raise VersionError("Update through ibmwebsite supported from 1030 version onwards.")
 
     # this option to restart hmc after configuration
     otherConfig['-R'] = " "
