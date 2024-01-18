@@ -422,7 +422,7 @@ def upgrade_hmc(module, params):
 
     if locationType == 'ibmwebsite':
         raise ParameterError("Upgrade through ibmwebsite is not supported ")
- 
+
     if locationType == 'disk':
         is_img_in_hmc = check_image_in_hmc(module, params)
         if not is_img_in_hmc:
@@ -553,7 +553,7 @@ def update_hmc(module, params):
             otherConfig['-F'] = '/{0}/{1}'.format(params['build_config']['build_file'], iso_file)
 
     initial_version_details = hmc.listHMCVersion()
-     
+
     # In case of ibmwebsite, provide the ptf number
     if locationType == 'ibmwebsite':
         if int(initial_version_details["SERVICEPACK"]) >= 1030:
