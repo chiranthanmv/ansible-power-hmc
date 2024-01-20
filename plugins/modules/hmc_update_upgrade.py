@@ -114,6 +114,7 @@ options:
                     - The name of the PTF to install.
                       This option is required when the ISO image is located on the IBM Fix Central website. Otherwise, this option is not valid.
                       This option is required only when the location_type is 'ibmwebsite'
+                      This option is available for HMC versions from 1030 onwards
                 type: str
     state:
         description:
@@ -126,6 +127,7 @@ options:
     action:
        description:
            - c(listptf) lists available Hardware Management Console (HMC) updates from the IBM Fix Central website.
+           - This option is available for HMC versions from 1030 onwards
        type: str
        choices: ['listptf']
 '''
