@@ -45,6 +45,7 @@ class HmcCommandStack():
                'LSSYSCONN': 'lssysconn',
                'LSHMCLDAP': 'lshmcldap',
                'CHHMCLDAP': 'chhmcldap',
+               'LSUPDHMC': 'lsupdhmc',
                }
 
     HMC_CMD_OPT = {'LSHMC': {'-N': ' -n ',
@@ -124,6 +125,7 @@ class HmcCommandStack():
                                    '-K': ' -k ',
                                    '-L': ' -l ',
                                    '-O': ' -o '},
+                   'LSUPDHMC': {'-T': {'IBMWEBSITE': ' -t ibmwebsite '}},
                    'UPDHMC': {'-T': {'DISK': ' -t disk ',
                                      'DVD': ' -t dvd ',
                                      'FTP': ' -t ftp ',

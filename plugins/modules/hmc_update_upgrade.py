@@ -114,6 +114,7 @@ options:
                     - The name of the PTF to install.
                       This option is required when the ISO image is located on the IBM Fix Central website. Otherwise, this option is not valid.
                       This option is required only when the location_type is 'ibmwebsite'
+                      This option is available for HMC versions from 1030 onwards
                 type: str
     state:
         description:
@@ -121,9 +122,14 @@ options:
             - C(facts) does not change anything on the HMC and returns current driver/build level of HMC.
             - C(updated) ensures the target HMC is updated with given corrective service ISO image.
             - C(upgraded) ensures the target HMC is upgraded with given upgrade files.
-        required: true
         type: str
         choices: ['facts', 'updated', 'upgraded']
+    action:
+       description:
+           - c(listptf) lists available Hardware Management Console (HMC) updates from the IBM Fix Central website.
+           - This option is available for HMC versions from 1030 onwards
+       type: str
+       choices: ['listptf']
 '''
 
 EXAMPLES = '''
@@ -161,7 +167,15 @@ EXAMPLES = '''
           passwd: <SFTP_Server_Password>
           build_file: /Images/MF71190-10.2.1041.0-2308160028-x86_64.iso
       state: updated
-      
+
+- name: List all the available ptfs
+  hmc_update_upgrade:
+      hmc_host: '{{ inventory_hostname }}'
+      hmc_auth:
+         username: '{{ ansible_user }}'
+         password: '{{ hmc_password }}'
+      action: listptf
+
 - name: Update the HMC to the V10R2M1041(ifix) build level from ibmwebsite
   hmc_update_upgrade:
       hmc_host: '{{ inventory_hostname }}'
@@ -216,7 +230,7 @@ def command_option_checker(config):
     """
     if config['location_type'] in ['ftp', 'sftp']:
         mandatoryList = ['hostname', 'build_file', 'userid', 'passwd']
-        unsupportedList = ['mount_location','ptf']
+        unsupportedList = ['mount_location', 'ptf']
 
         if config['location_type'] == 'sftp':
             if not (config['sshkey_file'] or config['passwd']):
@@ -231,18 +245,17 @@ def command_option_checker(config):
 
     elif config['location_type'] == 'nfs':
         mandatoryList = ['hostname', 'build_file', 'mount_location']
-        unsupportedList = ['userid', 'passwd', 'sshkey_file','ptf']
+        unsupportedList = ['userid', 'passwd', 'sshkey_file', 'ptf']
     elif config['location_type'] == 'disk':
         mandatoryList = ['build_file']
-        unsupportedList = ['userid', 'passwd', 'sshkey_file', 'hostname', 'mount_location','ptf']
+        unsupportedList = ['userid', 'passwd', 'sshkey_file', 'hostname', 'mount_location', 'ptf']
     elif config['location_type'] in ['usb', 'dvd']:
         raise ParameterError("not supporting the option '%s'" % (config['location_type']))
     elif config['location_type'] == 'ibmwebsite':
         mandatoryList = ['ptf']
-        unsupportedList = ['userid', 'passwd', 'sshkey_file', 'hostname', 'mount_location','build_file']
+        unsupportedList = ['userid', 'passwd', 'sshkey_file', 'hostname', 'mount_location', 'build_file']
     else:
         raise ParameterError("not supporting the location_type option: '%s'" % (config['location_type']))
-     
 
     collate = []
     for eachMandatory in mandatoryList:
@@ -366,6 +379,29 @@ def facts(module, params):
     return changed, version_details, None
 
 
+def list_ptf(module, params):
+    hmc_host = params['hmc_host']
+    hmc_user = params['hmc_auth']['username']
+    password = params['hmc_auth']['password']
+    changed = False
+    hmc_conn = None
+    ptf_details = None
+
+    if params['build_config']:
+        raise ParameterError("not supporting build_config option")
+
+    hmc_conn = HmcCliConnection(module, hmc_host, hmc_user, password)
+    hmc = Hmc(hmc_conn)
+    initial_version_details = hmc.listHMCVersion()
+
+    if int(initial_version_details["SERVICEPACK"]) < 1030:
+        raise VersionError("List ptf is supported from 1030 version onwards.")
+    else:
+        ptf_details = hmc.listHMCPTF('ibmwebsite')
+
+    return changed, ptf_details, None
+
+
 def upgrade_hmc(module, params):
     hmc_host = params['hmc_host']
     hmc_user = params['hmc_auth']['username']
@@ -385,10 +421,10 @@ def upgrade_hmc(module, params):
     command_option_checker(params['build_config'])
 
     locationType = params['build_config']['location_type']
-    
+
     if locationType == 'ibmwebsite':
         raise ParameterError("Upgrade through ibmwebsite is not supported ")
-        
+
     if locationType == 'disk':
         is_img_in_hmc = check_image_in_hmc(module, params)
         if not is_img_in_hmc:
@@ -517,15 +553,15 @@ def update_hmc(module, params):
             otherConfig['-F'] = '/home/{0}/network_install/{1}'.format(hmc_user, iso_file)
         else:
             otherConfig['-F'] = '/{0}/{1}'.format(params['build_config']['build_file'], iso_file)
-            
+
     initial_version_details = hmc.listHMCVersion()
-            
-    #In case of ibmwebsite, provide the ptf number
+
+    # In case of ibmwebsite, provide the ptf number
     if locationType == 'ibmwebsite':
         if int(initial_version_details["SERVICEPACK"]) >= 1030:
             otherConfig['--PTF'] = params['build_config']['ptf']
         else:
-            raise VersionError("Update through ibmwebsite supported from 1030 version onwards.")      
+            raise VersionError("Update through ibmwebsite supported from 1030 version onwards.")
 
     # this option to restart hmc after configuration
     otherConfig['-R'] = " "
@@ -559,7 +595,16 @@ def perform_task(module):
         "updated": update_hmc,
         "facts": facts,
         "upgraded": upgrade_hmc,
+        "listptf": list_ptf,
     }
+
+    oper = 'state'
+    if params['state'] is None:
+        oper = 'action'
+    try:
+        return actions[params[oper]](module, params)
+    except (ParameterError, HmcError, Error) as error:
+        return False, repr(error), None
 
     if not params['hmc_auth']:
         return False, "missing credential info", None
@@ -599,15 +644,18 @@ def run_module():
                               ptf=dict(type='str')
                           )
                           ),
-        state=dict(required=True, type='str',
-                   choices=['updated', 'upgraded', 'facts'])
+        state=dict(type='str', choices=['updated', 'upgraded', 'facts']),
+        action=dict(type='str', choices=['listptf'])
     )
 
     module = AnsibleModule(
         argument_spec=module_args,
+        mutually_exclusive=[('state', 'action')],
+        required_one_of=[('state', 'action')],
         required_if=[['state', 'facts', ['hmc_host', 'hmc_auth']],
                      ['state', 'updated', ['hmc_host', 'hmc_auth', 'build_config']],
-                     ['state', 'upgraded', ['hmc_host', 'hmc_auth', 'build_config']]
+                     ['state', 'upgraded', ['hmc_host', 'hmc_auth', 'build_config']],
+                     ['action', 'listptf', ['hmc_host', 'hmc_auth']],
                      ]
     )
 
