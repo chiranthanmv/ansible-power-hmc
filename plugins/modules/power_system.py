@@ -387,6 +387,37 @@ def fetchManagedSysDetails(module, params):
 
     return changed, system_prop, None
 
+def fetchPCM(module, params):
+    hmc_host = params['hmc_host']
+    hmc_user = params['hmc_auth']['username']
+    password = params['hmc_auth']['password']
+    system_name = params['system_name']
+    system_prop = None
+    system_uuid = None
+    changed = False
+    validate_parameters(params)
+    try:
+        rest_conn = HmcRestClient(hmc_host, hmc_user, password)
+    except Exception as error:
+        error_msg = parse_error_response(error)
+        module.fail_json(msg=error_msg)
+
+    try:
+        system_uuid, server_dom = rest_conn.getPCM(system_name)
+        if not system_uuid:
+            module.fail_json(msg="Given system is not present")
+    except (Exception, HmcError) as error:
+        error_msg = parse_error_response(error)
+        logger.debug("Line number: %d exception: %s", sys.exc_info()[2].tb_lineno, repr(error))
+        module.fail_json(msg=error_msg)
+    finally:
+        try:
+            rest_conn.logoff()
+        except Exception as logoff_error:
+            error_msg = parse_error_response(logoff_error)
+            module.warn(error_msg)
+
+    return changed, system_prop, None
 
 def perform_task(module):
 
@@ -396,7 +427,8 @@ def perform_task(module):
         "poweroff": powerOffManagedSys,
         "facts": fetchManagedSysDetails,
         "modify_syscfg": modifySystemConfiguration,
-        "modify_hwres": modifySystemHardwareResources
+        "modify_hwres": modifySystemHardwareResources,
+        "pcm": fetchPCM
     }
     oper = 'action'
     if params['action'] is None:
@@ -439,7 +471,8 @@ def run_module():
                      ['action', 'poweron', ['hmc_host', 'hmc_auth', 'system_name']],
                      ['action', 'poweroff', ['hmc_host', 'hmc_auth', 'system_name']],
                      ['action', 'modify_syscfg', ['hmc_host', 'hmc_auth', 'system_name']],
-                     ['action', 'modify_hwres', ['hmc_host', 'hmc_auth', 'system_name']]
+                     ['action', 'modify_hwres', ['hmc_host', 'hmc_auth', 'system_name']],
+                     ['action', 'pcm', ['hmc_host', 'hmc_auth', 'system_name']],
                      ],
     )
 
