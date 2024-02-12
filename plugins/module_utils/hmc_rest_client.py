@@ -493,6 +493,22 @@ class HmcRestClient:
         return response
 
     def getVirtualIOServers(self, system_uuid, group='Advanced'):
+        url = "https://{0}/rest/api/pcm/ManagedSystem/{1}/preferences".format(self.hmc_ip, system_uuid)
+        header = {'X-API-Session': self.session,
+                  'Accept': 'application/vnd.ibm.powervm.uom+xml; type=VirtualIOServer'}
+        resp = open_url(url,
+                        headers=header,
+                        method='GET',
+                        validate_certs=False,
+                        force_basic_auth=True,
+                        timeout=3600)
+        if resp.code != 200:
+            logger.debug("Get of preferences failed. Respsonse code: %d", resp.code)
+            return None
+        response = resp.read()
+        return response
+
+      def getVirtualIOServers(self, system_uuid, group='Advanced'):
         url = "https://{0}/rest/api/uom/ManagedSystem/{1}/VirtualIOServer?group={2}".format(self.hmc_ip, system_uuid, group)
         header = {'X-API-Session': self.session,
                   'Accept': 'application/vnd.ibm.powervm.uom+xml; type=VirtualIOServer'}
@@ -507,7 +523,7 @@ class HmcRestClient:
             return None
         response = resp.read()
         return response
-
+    
     def getVirtualIOServersQuick(self, system_uuid):
         url = "https://{0}/rest/api/uom/ManagedSystem/{1}/VirtualIOServer/quick/All".format(self.hmc_ip, system_uuid)
         header = {'X-API-Session': self.session,
