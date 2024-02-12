@@ -492,7 +492,7 @@ class HmcRestClient:
         response = resp.read()
         return response
 
-    def getVirtualIOServers(self, system_uuid, group='Advanced'):
+    def getPCM(self, system_uuid, group='Advanced'):
         url = "https://{0}/rest/api/pcm/ManagedSystem/{1}/preferences".format(self.hmc_ip, system_uuid)
         header = {'X-API-Session': self.session,
                   'Accept': 'application/vnd.ibm.powervm.uom+xml; type=VirtualIOServer'}
