@@ -492,7 +492,7 @@ class HmcRestClient:
         response = resp.read()
         return response
 
-    def getPCM(self, system_uuid, group='Advanced'):
+    def getPCM(self, system_uuid):
         url = "https://{0}/rest/api/pcm/ManagedSystem/{1}/preferences".format(self.hmc_ip, system_uuid)
         header = {'X-API-Session': self.session,
                   'Accept': 'application/vnd.ibm.powervm.uom+xml; type=VirtualIOServer'}
@@ -505,6 +505,44 @@ class HmcRestClient:
         if resp.code != 200:
             logger.debug("Get of preferences failed. Respsonse code: %d", resp.code)
             return None
+        response = resp.read()
+        return response
+    
+    
+    def updatePCM(self, system_uuid, matrics):
+        logon_res = self.logon()
+        url = "https://{0}/rest/api/pcm/ManagedSystem/{1}/preferences".format(self.hmc_ip, system_uuid)
+        header = {'Content-Type': 'application/xml',
+                 'X-API-Session': logon_res}
+        sys_details = self.getPCM(system_uuid, matrics)
+        doc = xml_strip_namespace(sys_details)
+        preference_map = {'LTM': 'LongTermMonitorEnabled', 'STM': 'ShortTermMonitorEnabled', 'AM': 'AggregationEnabled', 'CLTM': 'ComputeLTMEnabled'}
+        existing_pref = []
+        path = doc.xpath("//ManagedSystemPcmPreference")[0]
+        for item in preference_map:
+            if path.xpath(preference_map[item])[0].text == "true":
+                existing_pref.append(item)
+        logger.debug("Existing pref: %s",str(existing_pref))
+        preference = list(set(matrics)|set(existing_pref))
+        logger.debug("Total pref: %s",str(preference))
+        if (set(existing_pref) != set(preference) && all(element in set(preference) for element in set(existing_pref))):
+            for item in preference:
+                path.xpath(preference[item])[0].text = "true":
+            payload_content = etree.tostring(path)
+            payload_content  = value.decode("utf-8").replace("ManagedSystemPcmPreference", PCM_TEMPLATE, 1)
+            payload_content = payload_content.replace('\n',' ').replace('\"','\'')
+            payload_content = etree.fromstring(payload_content)
+            xml = etree.tostring(payload_content, encoding='unicode')
+            resp = open_url(url,
+                             headers=header,
+                             method='POST',
+                             data=xml,
+                             validate_certs=False,
+                             force_basic_auth=True,
+                             timeout=3600)
+            if resp.code != 200:
+                logger.debug("Get of preferences failed. Respsonse code: %d", resp.code)
+                return None
         response = resp.read()
         return response
 
