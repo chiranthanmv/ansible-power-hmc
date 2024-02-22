@@ -469,7 +469,7 @@ def run_module():
         mem_mirroring_mode=dict(type='str', choices=['none', 'sys_firmware_only']),
         matrics=dict(type='list', elements='str', choices=['LTM', 'STM', 'AM', 'CLTM']),
         pend_mem_region_size=dict(type='str', choices=['auto', '16', '32', '64', '128', '256']),
-        action=dict(type='str', choices=['poweron', 'poweroff', 'modify_syscfg', 'modify_hwres']),
+        action=dict(type='str', choices=['poweron', 'poweroff', 'modify_syscfg', 'modify_hwres', 'updatepcm']),
         state=dict(type='str', choices=['facts']),
     )
 
