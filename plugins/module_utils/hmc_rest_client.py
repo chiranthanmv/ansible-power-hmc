@@ -19,7 +19,7 @@ import logging
 LOG_FILENAME = "/tmp/ansible_power_hmc.log"
 logger = logging.getLogger(__name__)
 
-
+PCM_TEMPLATE_NS = 'ManagedSystemPcmPreference xmlns:ManagedSystemPcmPreference="http://www.ibm.com/xmlns/systems/power/firmware/pcm/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/pcm/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2"'
 LPAR_TEMPLATE_NS = 'PartitionTemplate xmlns="http://www.ibm.com/xmlns/systems/power/\
 firmware/templates/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2"'
 LPAR_NS = 'LogicalPartition xmlns:LogicalPartition="http://www.ibm.com/xmlns/\
@@ -495,7 +495,7 @@ class HmcRestClient:
     def getPCM(self, system_uuid):
         url = "https://{0}/rest/api/pcm/ManagedSystem/{1}/preferences".format(self.hmc_ip, system_uuid)
         header = {'X-API-Session': self.session,
-                  'Accept': 'application/vnd.ibm.powervm.uom+xml; type=VirtualIOServer'}
+                'Content-Type': 'application/xml'}
         resp = open_url(url,
                         headers=header,
                         method='GET',
@@ -507,14 +507,13 @@ class HmcRestClient:
             return None
         response = resp.read()
         return response
-    
-    
+
     def updatePCM(self, system_uuid, matrics):
         logon_res = self.logon()
         url = "https://{0}/rest/api/pcm/ManagedSystem/{1}/preferences".format(self.hmc_ip, system_uuid)
         header = {'Content-Type': 'application/xml',
                  'X-API-Session': logon_res}
-        sys_details = self.getPCM(system_uuid, matrics)
+        sys_details = self.getPCM(system_uuid)
         doc = xml_strip_namespace(sys_details)
         preference_map = {'LTM': 'LongTermMonitorEnabled', 'STM': 'ShortTermMonitorEnabled', 'AM': 'AggregationEnabled', 'CLTM': 'ComputeLTMEnabled'}
         existing_pref = []
@@ -522,31 +521,30 @@ class HmcRestClient:
         for item in preference_map:
             if path.xpath(preference_map[item])[0].text == "true":
                 existing_pref.append(item)
-        logger.debug("Existing pref: %s",str(existing_pref))
         preference = list(set(matrics)|set(existing_pref))
-        logger.debug("Total pref: %s",str(preference))
-        if (set(existing_pref) != set(preference) && all(element in set(preference) for element in set(existing_pref))):
+        if (set(existing_pref) != set(preference) and  all(element in set(existing_pref) for element in set(preference))==False):
             for item in preference:
-                path.xpath(preference[item])[0].text = "true":
+                path.xpath(preference_map[item])[0].text = "true"
             payload_content = etree.tostring(path)
-            payload_content  = value.decode("utf-8").replace("ManagedSystemPcmPreference", PCM_TEMPLATE, 1)
+            payload_content  = payload_content.decode("utf-8").replace("ManagedSystemPcmPreference", PCM_TEMPLATE_NS, 1)
             payload_content = payload_content.replace('\n',' ').replace('\"','\'')
             payload_content = etree.fromstring(payload_content)
-            xml = etree.tostring(payload_content, encoding='unicode')
+            payload_content = etree.tostring(payload_content, encoding='unicode')
             resp = open_url(url,
                              headers=header,
                              method='POST',
-                             data=xml,
+                             data=payload_content,
                              validate_certs=False,
                              force_basic_auth=True,
                              timeout=3600)
+
             if resp.code != 200:
                 logger.debug("Get of preferences failed. Respsonse code: %d", resp.code)
                 return None
-        response = resp.read()
-        return response
+            response = resp.read()
+            return response
 
-      def getVirtualIOServers(self, system_uuid, group='Advanced'):
+    def getVirtualIOServers(self, system_uuid, group='Advanced'):
         url = "https://{0}/rest/api/uom/ManagedSystem/{1}/VirtualIOServer?group={2}".format(self.hmc_ip, system_uuid, group)
         header = {'X-API-Session': self.session,
                   'Accept': 'application/vnd.ibm.powervm.uom+xml; type=VirtualIOServer'}
