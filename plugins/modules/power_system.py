@@ -391,13 +391,12 @@ def fetchManagedSysDetails(module, params):
 
     return changed, system_prop, None
 
-
 def updatePCM(module, params):
     hmc_host = params['hmc_host']
     hmc_user = params['hmc_auth']['username']
     password = params['hmc_auth']['password']
     system_name = params['system_name']
-    matric = params['matrics']
+    matrics = params['matrics']
     system_prop = None
     system_uuid = None
     changed = False
@@ -414,6 +413,8 @@ def updatePCM(module, params):
             module.fail_json(msg="Given system is not present")
         else:
             system_prop = rest_conn.updatePCM(system_uuid, matrics)
+            if system_prop:
+                changed = True
     except (Exception, HmcError) as error:
         error_msg = parse_error_response(error)
         logger.debug("Line number: %d exception: %s", sys.exc_info()[2].tb_lineno, repr(error))
@@ -466,7 +467,7 @@ def run_module():
         power_on_lpar_start_policy=dict(type='str', choices=['autostart', 'userinit', 'autorecovery']),
         requested_num_sys_huge_pages=dict(type='int'),
         mem_mirroring_mode=dict(type='str', choices=['none', 'sys_firmware_only']),
-        matrics=dict(type='list', elements='str', options=['LTM', 'STM', 'AM', 'CLTM']),
+        matrics=dict(type='list', elements='str', choices=['LTM', 'STM', 'AM', 'CLTM']),
         pend_mem_region_size=dict(type='str', choices=['auto', '16', '32', '64', '128', '256']),
         action=dict(type='str', choices=['poweron', 'poweroff', 'modify_syscfg', 'modify_hwres']),
         state=dict(type='str', choices=['facts']),
