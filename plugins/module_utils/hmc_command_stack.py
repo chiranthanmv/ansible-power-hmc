@@ -46,6 +46,8 @@ class HmcCommandStack():
                'LSHMCLDAP': 'lshmcldap',
                'CHHMCLDAP': 'chhmcldap',
                'LSUPDHMC': 'lsupdhmc',
+               'MKVTERM': 'mkvterm',
+               'RMVTERM': 'rmvterm'
                }
 
     HMC_CMD_OPT = {'LSHMC': {'-N': ' -n ',
@@ -319,7 +321,13 @@ class HmcCommandStack():
                                     '-L': ' -l ',
                                     '-V': ' -V ',
                                     '-Y': ' -Y ',
-                                    '-K': ' -K '},
+                                    '-K': ' -K ',
+                                    '-x': ' -x ',
+                                    '-v': ' -v ',
+                                    '-i': ' -i ',
+                                    '-d': ' -d ',
+                                    '-s': ' -s ',
+                                    '-m': ' -m '},
                    'LSREFCODE': {'-R': {'LPAR': ' -r lpar'},
                                  '-M': ' -m ',
                                  '-F': ' -F ',
@@ -424,6 +432,10 @@ class HmcCommandStack():
                                  'GROUPATTRIBUTE': ' --groupattribute',
                                  'MEMBERATTRIBUTE': ' --memberattribute'
                                  },
+                   'MKVTERM': {'-m': ' -m ',
+                               '-p': ' -p '},
+                   'RMVTERM': {'-m': ' -m ',
+                               '-p': ' -p '},
                    }
 
     def filterBuilder(self, cmdKey, configOptionsDict):
