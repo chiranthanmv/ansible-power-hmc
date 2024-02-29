@@ -509,6 +509,7 @@ class HmcRestClient:
         return response
 
     def updatePCM(self, system_uuid, matrics):
+        logon_res = self.logon()
         url = "https://{0}/rest/api/pcm/ManagedSystem/{1}/preferences".format(self.hmc_ip, system_uuid)
         header = {'Content-Type': 'application/xml',
                  'X-API-Session': logon_res}
