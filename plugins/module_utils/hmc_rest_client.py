@@ -492,7 +492,7 @@ class HmcRestClient:
         response = resp.read()
         return response
 
-    def getPCM(self, system_uuid):
+    def getSystemPCMpreferences(self, system_uuid):
         url = "https://{0}/rest/api/pcm/ManagedSystem/{1}/preferences".format(self.hmc_ip, system_uuid)
         header = {'X-API-Session': self.session,
                 'Content-Type': 'application/xml'}
@@ -509,11 +509,10 @@ class HmcRestClient:
         return response
 
     def updatePCM(self, system_uuid, matrics):
-        logon_res = self.logon()
         url = "https://{0}/rest/api/pcm/ManagedSystem/{1}/preferences".format(self.hmc_ip, system_uuid)
         header = {'Content-Type': 'application/xml',
                  'X-API-Session': logon_res}
-        sys_details = self.getPCM(system_uuid)
+        sys_details = self.getSystemPCMpreferences(system_uuid)
         doc = xml_strip_namespace(sys_details)
         preference_map = {'LTM': 'LongTermMonitorEnabled', 'STM': 'ShortTermMonitorEnabled', 'AM': 'AggregationEnabled', 'CLTM': 'ComputeLTMEnabled'}
         existing_pref = []
