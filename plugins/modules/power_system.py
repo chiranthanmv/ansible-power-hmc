@@ -91,14 +91,24 @@ options:
             - This option works with C(modify_hwres) I(action).
         type: str
         choices: ['auto', '16', '32', '64', '128', '256']
+    matrics:
+        description:
+            - Provides option five types of utilization data
+            - Long Term Monitor(LTM), Short Term Monitor(STM), Aggregated metrics(AM), ComputeLTM(CLTM), EnergyMonitor(EM).
+            - AM collects data from LTM and EM, hence when the AM is enabled automatically LTM and EM will be enabled.
+            - When LTM or EM is disabled then automatically the AM will also get disabled.
+         type: list
+         choices: ['LTM', 'STM', 'AM', 'CLTM', 'EM']
     action:
         description:
             - C(poweroff) poweroff a specified I(system_name).
             - C(poweron) poweron a specified I(system_name).
             - C(modify_syscfg) Makes system configurations of specified I(system_name).
             - C(modify_hwres) Makes hardware resource configurations of specified I(system_name).
+            - C(enablepcm) Enables the Performance and Capacity Monitoring for specified types of utilization data.
+            - C(disablepcm) Disables the Performance and Capacity Monitoring for specified types of utilization data.
         type: str
-        choices: ['poweron', 'poweroff', 'modify_syscfg', 'modify_hwres']
+        choices: ['poweron', 'poweroff', 'modify_syscfg', 'modify_hwres', 'enablepcm', 'disablepcm']
     state:
         description:
             - C(facts) fetch details of specified I(system_name)
@@ -157,6 +167,28 @@ EXAMPLES = '''
          password: '{{ hmc_password }}'
     system_name: <managed_system_name>
     state: facts
+    
+- name: enable the long-term monitoring
+  power_system:
+    hmc_host: "{{ inventory_hostname }}"
+    hmc_auth:
+         username: '{{ ansible_user }}'
+         password: '{{ hmc_password }}'
+    system_name: <managed_system_name>
+    matrics:
+           - LTM
+    action: enablepcm
+    
+ - name: disable the short-term monitoring
+  power_system:
+    hmc_host: "{{ inventory_hostname }}"
+    hmc_auth:
+         username: '{{ ansible_user }}'
+         password: '{{ hmc_password }}'
+    system_name: <managed_system_name>
+    matrics:
+           - STM
+    action: disblepcm
 
 '''
 
