@@ -397,6 +397,9 @@ def updatePCM(module, params):
     password = params['hmc_auth']['password']
     system_name = params['system_name']
     matrics = params['matrics']
+    disable = 'false'
+    if params['action'] == 'disablepcm':
+        disable = 'true'
     system_prop = None
     system_uuid = None
     changed = False
@@ -437,7 +440,8 @@ def perform_task(module):
         "facts": fetchManagedSysDetails,
         "modify_syscfg": modifySystemConfiguration,
         "modify_hwres": modifySystemHardwareResources,
-        "updatepcm": updatePCM
+        "enablepcm": updatePCM,
+        "disablepcm": updatePCM
     }
     oper = 'action'
     if params['action'] is None:
@@ -469,7 +473,7 @@ def run_module():
         mem_mirroring_mode=dict(type='str', choices=['none', 'sys_firmware_only']),
         matrics=dict(type='list', elements='str', choices=['LTM', 'STM', 'AM', 'CLTM']),
         pend_mem_region_size=dict(type='str', choices=['auto', '16', '32', '64', '128', '256']),
-        action=dict(type='str', choices=['poweron', 'poweroff', 'modify_syscfg', 'modify_hwres', 'updatepcm']),
+        action=dict(type='str', choices=['poweron', 'poweroff', 'modify_syscfg', 'modify_hwres', 'enablepcm', 'disablepcm']),
         state=dict(type='str', choices=['facts']),
     )
 
@@ -482,7 +486,8 @@ def run_module():
                      ['action', 'poweroff', ['hmc_host', 'hmc_auth', 'system_name']],
                      ['action', 'modify_syscfg', ['hmc_host', 'hmc_auth', 'system_name']],
                      ['action', 'modify_hwres', ['hmc_host', 'hmc_auth', 'system_name']],
-                     ['action', 'updatepcm', ['hmc_host', 'hmc_auth', 'system_name', 'matrics']],
+                     ['action', 'enablepcm', ['hmc_host', 'hmc_auth', 'system_name', 'matrics']],
+                     ['action', 'disablepcm', ['hmc_host', 'hmc_auth', 'system_name', 'matrics']],
                      ],
     )
 
