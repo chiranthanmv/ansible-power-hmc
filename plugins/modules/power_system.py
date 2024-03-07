@@ -503,7 +503,7 @@ def run_module():
         power_on_lpar_start_policy=dict(type='str', choices=['autostart', 'userinit', 'autorecovery']),
         requested_num_sys_huge_pages=dict(type='int'),
         mem_mirroring_mode=dict(type='str', choices=['none', 'sys_firmware_only']),
-        matrics=dict(type='list', elements='str', choices=['LTM', 'STM', 'AM', 'CLTM']),
+        matrics=dict(type='list', elements='str', choices=['LTM', 'STM', 'AM', 'CLTM', 'EM']),
         pend_mem_region_size=dict(type='str', choices=['auto', '16', '32', '64', '128', '256']),
         action=dict(type='str', choices=['poweron', 'poweroff', 'modify_syscfg', 'modify_hwres', 'enablepcm', 'disablepcm']),
         state=dict(type='str', choices=['facts']),
