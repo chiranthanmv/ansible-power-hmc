@@ -248,7 +248,7 @@ def validate_parameters(params):
     elif opr == 'modify_hwres':
         mandatoryList = ['hmc_host', 'hmc_auth', 'system_name']
         unsupportedList = ['new_name', 'power_off_policy', 'power_on_lpar_start_policy', 'matrics']
-    elif opr == 'updatepcm':
+    elif opr == 'enablepcm' or opr == 'disablepcm':
         mandatoryList = ['hmc_host', 'hmc_auth', 'system_name', 'matrics']
         unsupportedList = ['new_name', 'power_off_policy', 'power_on_lpar_start_policy', 'requested_num_sys_huge_pages',
                            'mem_mirroring_mode', 'pend_mem_region_size',]
