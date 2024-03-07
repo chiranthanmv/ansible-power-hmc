@@ -447,7 +447,7 @@ def updatePCM(module, params):
         if not system_uuid:
             module.fail_json(msg="Given system is not present")
         else:
-            system_prop = rest_conn.updatePCM(system_uuid, matrics)
+            system_prop = rest_conn.updatePCM(system_uuid, matrics, disable)
             if system_prop:
                 changed = True
     except (Exception, HmcError) as error:
