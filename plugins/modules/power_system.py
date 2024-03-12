@@ -451,11 +451,12 @@ def updatePCM(module, params):
             system_prop = rest_conn.updatePCM(system_uuid, matrics, disable)
             if system_prop:
                 changed = True
-                if ('AM' in matrics and disable == 'false'):
+                if ('AM' in matrics and ('LTM' or 'EM') not in matrics and disable == 'false'):
                     warning = "Enabling AM will automatically enables LTM and EM matrics"
-                elif (('LTM' or 'EM' in matrics) and disable == 'true'):
+                elif (('LTM' in matrics or 'EM' in matrics) and disable == 'true'):
                     warning = "Disabling LTM or EM automatically disables AM matrics"
-                system_prop['info'] = warning
+                if warning != None:
+                    system_prop['info'] = warning
     except (Exception, HmcError) as error:
         error_msg = parse_error_response(error)
         logger.debug("Line number: %d exception: %s", sys.exc_info()[2].tb_lineno, repr(error))

@@ -543,7 +543,7 @@ class HmcRestClient:
                 existing_disabled.append(item)
         if disable == 'true':
             #LTM and CM is dependent on AM"
-            if "LTM" or "EM" in matrics:
+            if ("LTM" in matrics or "EM" in matrics):
                 matrics.append("AM")
             preference = list(set(matrics)|set(existing_disabled))
             if (set(existing_disabled) != set(preference) and (set(preference).issubset(set(existing_disabled))==False)):

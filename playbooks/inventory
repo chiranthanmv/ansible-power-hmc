@@ -1,7 +1,6 @@
 [hmcs]
-hmc1
-vhmc1
-vhmc2
+9.40.206.63
 
 [hmcs:vars]
+ansible_python_interpreter=/usr/bin/python3
 ansible_user=hscroot
