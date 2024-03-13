@@ -428,7 +428,7 @@ def updatePCM(module, params):
     hmc_user = params['hmc_auth']['username']
     password = params['hmc_auth']['password']
     system_name = params['system_name']
-    matrics = params['matrics']
+    matrics = params['metrics']
     disable = 'false'
     if params['action'] == 'disablepcm':
         disable = 'true'
@@ -448,13 +448,13 @@ def updatePCM(module, params):
         if not system_uuid:
             module.fail_json(msg="Given system is not present")
         else:
-            system_prop = rest_conn.updatePCM(system_uuid, matrics, disable)
+            system_prop = rest_conn.updatePCM(system_uuid, ma\etrics, disable)
             if system_prop:
                 changed = True
-                if ('AM' in matrics and ('LTM' or 'EM') not in matrics and disable == 'false'):
-                    warning = "Enabling AM will automatically enables LTM and EM matrics"
+                if ('AM' in matrics and ('LTM' not in metrics or 'EM' not in metrics) and disable == 'false'):
+                    warning = "Enabling AM will automatically enables LTM and EM metrics"
                 elif (('LTM' in matrics or 'EM' in matrics) and disable == 'true'):
-                    warning = "Disabling LTM or EM automatically disables AM matrics"
+                    warning = "Disabling LTM or EM automatically disables AM metrics"
                 if warning != None:
                     system_prop['info'] = warning
     except (Exception, HmcError) as error:
@@ -479,8 +479,8 @@ def perform_task(module):
         "facts": fetchManagedSysDetails,
         "modify_syscfg": modifySystemConfiguration,
         "modify_hwres": modifySystemHardwareResources,
-        "enablepcm": updatePCM,
-        "disablepcm": updatePCM
+        "enable_pcm": updatePCM,
+        "disable_pcm": updatePCM
     }
     oper = 'action'
     if params['action'] is None:
@@ -510,7 +510,7 @@ def run_module():
         power_on_lpar_start_policy=dict(type='str', choices=['autostart', 'userinit', 'autorecovery']),
         requested_num_sys_huge_pages=dict(type='int'),
         mem_mirroring_mode=dict(type='str', choices=['none', 'sys_firmware_only']),
-        matrics=dict(type='list', elements='str', choices=['LTM', 'STM', 'AM', 'CLTM', 'EM']),
+        metrics=dict(type='list', elements='str', choices=['LTM', 'STM', 'AM', 'CLTM', 'EM']),
         pend_mem_region_size=dict(type='str', choices=['auto', '16', '32', '64', '128', '256']),
         action=dict(type='str', choices=['poweron', 'poweroff', 'modify_syscfg', 'modify_hwres', 'enablepcm', 'disablepcm']),
         state=dict(type='str', choices=['facts']),
@@ -525,8 +525,8 @@ def run_module():
                      ['action', 'poweroff', ['hmc_host', 'hmc_auth', 'system_name']],
                      ['action', 'modify_syscfg', ['hmc_host', 'hmc_auth', 'system_name']],
                      ['action', 'modify_hwres', ['hmc_host', 'hmc_auth', 'system_name']],
-                     ['action', 'enablepcm', ['hmc_host', 'hmc_auth', 'system_name', 'matrics']],
-                     ['action', 'disablepcm', ['hmc_host', 'hmc_auth', 'system_name', 'matrics']],
+                     ['action', 'enable_pcm', ['hmc_host', 'hmc_auth', 'system_name', 'metrics']],
+                     ['action', 'disable_pcm', ['hmc_host', 'hmc_auth', 'system_name', 'metrics']],
                      ],
     )
 
