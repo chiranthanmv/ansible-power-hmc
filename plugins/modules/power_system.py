@@ -91,7 +91,7 @@ options:
             - This option works with C(modify_hwres) I(action).
         type: str
         choices: ['auto', '16', '32', '64', '128', '256']
-    matrics:
+    metrics:
         description:
             - Provides option five types of utilization data
             - Long Term Monitor(LTM), Short Term Monitor(STM), Aggregated metrics(AM), ComputeLTM(CLTM), EnergyMonitor(EM).
@@ -175,9 +175,9 @@ EXAMPLES = '''
          username: '{{ ansible_user }}'
          password: '{{ hmc_password }}'
     system_name: <managed_system_name>
-    matrics:
+    metrics:
            - LTM
-    action: enablepcm
+    action: enable_pcm
     
  - name: disable the short-term monitoring
   power_system:
@@ -186,9 +186,9 @@ EXAMPLES = '''
          username: '{{ ansible_user }}'
          password: '{{ hmc_password }}'
     system_name: <managed_system_name>
-    matrics:
+    metrics:
            - STM
-    action: disblepcm
+    action: disble_pcm
 
 '''
 
@@ -244,18 +244,18 @@ def validate_parameters(params):
 
     if opr == 'modify_syscfg':
         mandatoryList = ['hmc_host', 'hmc_auth', 'system_name']
-        unsupportedList = ['requested_num_sys_huge_pages', 'mem_mirroring_mode', 'pend_mem_region_size', 'matrics']
+        unsupportedList = ['requested_num_sys_huge_pages', 'mem_mirroring_mode', 'pend_mem_region_size', 'metrics']
     elif opr == 'modify_hwres':
         mandatoryList = ['hmc_host', 'hmc_auth', 'system_name']
-        unsupportedList = ['new_name', 'power_off_policy', 'power_on_lpar_start_policy', 'matrics']
-    elif opr == 'enablepcm' or opr == 'disablepcm':
-        mandatoryList = ['hmc_host', 'hmc_auth', 'system_name', 'matrics']
+        unsupportedList = ['new_name', 'power_off_policy', 'power_on_lpar_start_policy', 'metrics']
+    elif opr == 'enable_pcm' or opr == 'disable_pcm':
+        mandatoryList = ['hmc_host', 'hmc_auth', 'system_name', 'metrics']
         unsupportedList = ['new_name', 'power_off_policy', 'power_on_lpar_start_policy', 'requested_num_sys_huge_pages',
                            'mem_mirroring_mode', 'pend_mem_region_size',]
     else:
         mandatoryList = ['hmc_host', 'hmc_auth', 'system_name']
         unsupportedList = ['new_name', 'power_off_policy', 'power_on_lpar_start_policy', 'requested_num_sys_huge_pages',
-                           'mem_mirroring_mode', 'pend_mem_region_size', 'matrics']
+                           'mem_mirroring_mode', 'pend_mem_region_size', 'metrics']
 
     collate = []
     for eachMandatory in mandatoryList:
