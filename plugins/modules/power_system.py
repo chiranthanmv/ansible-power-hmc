@@ -430,7 +430,7 @@ def updatePCM(module, params):
     system_name = params['system_name']
     metrics = params['metrics']
     disable = 'false'
-    if params['action'] == 'disablepcm':
+    if params['action'] == 'disable_pcm':
         disable = 'true'
     system_prop = None
     system_uuid = None
