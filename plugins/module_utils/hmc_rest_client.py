@@ -524,7 +524,7 @@ class HmcRestClient:
         response = resp.read()
         return response
 
-    def updatePCM(self, system_uuid, matrics, disable):
+    def updatePCM(self, system_uuid, metrics, disable):
         logon_res = self.logon()
         url = "https://{0}/rest/api/pcm/ManagedSystem/{1}/preferences".format(self.hmc_ip, system_uuid)
         header = {'Content-Type': 'application/xml',
@@ -543,9 +543,9 @@ class HmcRestClient:
                 existing_disabled.append(item)
         if disable == 'true':
             #LTM and CM is dependent on AM"
-            if ("LTM" in matrics or "EM" in matrics):
-                matrics.append("AM")
-            preference = list(set(matrics)|set(existing_disabled))
+            if ("LTM" in metrics or "EM" in metrics):
+                metrics.append("AM")
+            preference = list(set(metrics)|set(existing_disabled))
             if (set(existing_disabled) != set(preference) and (set(preference).issubset(set(existing_disabled))==False)):
                 flag = True
                 for item in existing_enabled:
@@ -553,7 +553,7 @@ class HmcRestClient:
                 for item in preference:
                     path.xpath(preference_map[item])[0].text = "false"
         else:
-            preference = list(set(matrics)|set(existing_enabled))
+            preference = list(set(metrics)|set(existing_enabled))
             if (set(existing_enabled) != set(preference) and  (set(preference).issubset(set(existing_enabled))==False)):
                 flag = True
                 for item in preference:
