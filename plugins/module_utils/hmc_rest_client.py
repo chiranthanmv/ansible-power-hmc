@@ -543,7 +543,7 @@ class HmcRestClient:
                 existing_disabled.append(item)
         if disable == 'true':
             #LTM and CM is dependent on AM"
-            if ("LTM" in metrics or "EM" in metrics):
+            if ("LTM" in metrics or "EM" in metrics) and "AM" not in metrics:
                 metrics.append("AM")
             preference = list(set(metrics)|set(existing_disabled))
             if (set(existing_disabled) != set(preference) and (set(preference).issubset(set(existing_disabled))==False)):
@@ -553,6 +553,9 @@ class HmcRestClient:
                 for item in preference:
                     path.xpath(preference_map[item])[0].text = "false"
         else:
+            if "AM" in metrics and ("LTM" not in metrics or "EM" not in metrics):
+                metrics.append("LTM")
+                metrics.append("EM")
             preference = list(set(metrics)|set(existing_enabled))
             if (set(existing_enabled) != set(preference) and  (set(preference).issubset(set(existing_enabled))==False)):
                 flag = True
