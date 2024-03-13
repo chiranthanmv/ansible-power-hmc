@@ -428,7 +428,7 @@ def updatePCM(module, params):
     hmc_user = params['hmc_auth']['username']
     password = params['hmc_auth']['password']
     system_name = params['system_name']
-    matrics = params['metrics']
+    metrics = params['metrics']
     disable = 'false'
     if params['action'] == 'disablepcm':
         disable = 'true'
@@ -448,12 +448,12 @@ def updatePCM(module, params):
         if not system_uuid:
             module.fail_json(msg="Given system is not present")
         else:
-            system_prop = rest_conn.updatePCM(system_uuid, ma\etrics, disable)
+            system_prop = rest_conn.updatePCM(system_uuid, metrics, disable)
             if system_prop:
                 changed = True
-                if ('AM' in matrics and ('LTM' not in metrics or 'EM' not in metrics) and disable == 'false'):
+                if ('AM' in metrics and ('LTM' not in metrics or 'EM' not in metrics) and disable == 'false'):
                     warning = "Enabling AM will automatically enables LTM and EM metrics"
-                elif (('LTM' in matrics or 'EM' in matrics) and disable == 'true'):
+                elif (('LTM' in metrics or 'EM' in metrics) and disable == 'true'):
                     warning = "Disabling LTM or EM automatically disables AM metrics"
                 if warning != None:
                     system_prop['info'] = warning
