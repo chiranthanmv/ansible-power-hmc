@@ -451,7 +451,7 @@ def updatePCM(module, params):
             system_prop = rest_conn.updatePCM(system_uuid, metrics, disable)
             if system_prop:
                 changed = True
-                if ('AM' in metrics and ('LTM' not in metrics or 'EM' not in metrics) and disable == 'false'):
+                if ('AM' in metrics and disable == 'false'):
                     warning = "Enabling AM will automatically enables LTM and EM metrics"
                 elif (('LTM' in metrics or 'EM' in metrics) and disable == 'true'):
                     warning = "Disabling LTM or EM automatically disables AM metrics"
