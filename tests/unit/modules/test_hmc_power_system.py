@@ -76,9 +76,9 @@ test_data6 = [
      "ParameterError: mandatory parameter 'hmc_host' is missing"),
     # when system_name is missing
     ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'action': 'enable_pcm', 'state': None, 'system_name': None, 'metrics': 'metrics'},
-     "ParameterError: mandatory parameter 'system_name' is missing"),  
+     "ParameterError: mandatory parameter 'system_name' is missing"),
     # when mertrics is mssing
-     ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'action': 'enable_pcm', 'state': None, 'system_name': "system_name", 'metrics': None},
+    ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'action': 'enable_pcm', 'state': None, 'system_name': "system_name", 'metrics': None},
     "ParameterError: mandatory parameter 'metrics' is missing")]
 
 
@@ -145,7 +145,7 @@ def test_call_inside_fetchManagedSysDetails(mocker, power_system_test_input, exp
 
 
 @pytest.mark.parametrize("power_system_test_input, expectedError", test_data6)
-def test_call_inside_fetchManagedSysDetails(mocker, power_system_test_input, expectedError):
+def test_call_inside_PCMDetails(mocker, power_system_test_input, expectedError):
     hmc_power_system = common_mock_setup(mocker)
     if 'ParameterError' in expectedError:
         with pytest.raises(ParameterError) as e:
