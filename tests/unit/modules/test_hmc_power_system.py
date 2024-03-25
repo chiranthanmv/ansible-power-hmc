@@ -145,11 +145,11 @@ def test_call_inside_fetchManagedSysDetails(mocker, power_system_test_input, exp
 
 
 @pytest.mark.parametrize("power_system_test_input, expectedError", test_data6)
-def test_call_inside_PCMDetails(mocker, power_system_test_input, expectedError):
+def test_call_inside_updatePCM(mocker, power_system_test_input, expectedError):
     hmc_power_system = common_mock_setup(mocker)
     if 'ParameterError' in expectedError:
         with pytest.raises(ParameterError) as e:
-            hmc_power_system.PCMDetails(hmc_power_system, power_system_test_input)
+            hmc_power_system.updatePCM(hmc_power_system, power_system_test_input)
         assert expectedError == repr(e.value)
     else:
-        hmc_power_system.PCMDetails(hmc_power_system, power_system_test_input)
+        hmc_power_system.updatePCM(hmc_power_system, power_system_test_input)
