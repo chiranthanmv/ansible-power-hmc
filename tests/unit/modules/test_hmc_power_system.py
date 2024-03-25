@@ -51,7 +51,8 @@ test_data4 = [
      "ParameterError: mandatory parameter 'system_name' is missing"),
     # when new_name', 'power_off_policy', 'power_on_lpar_start_policy mentiones
     ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'action': 'modify_hwres', 'system_name': "system_name", 'new_name': 'new_name', 'power_off_policy': 0,
-      'power_on_lpar_start_policy': 'power_on_lpar_start_policy', 'state': None, 'pend_mem_region_size': '256', 'mem_mirroring_mode': 'sys_firmware_only'},
+      'power_on_lpar_start_policy': 'power_on_lpar_start_policy', 'state': None, 'pend_mem_region_size': '256', 'mem_mirroring_mode': 'sys_firmware_only',
+      'metrics': None},
      "ParameterError: unsupported parameters: new_name, power_on_lpar_start_policy")]
 
 test_data5 = [
