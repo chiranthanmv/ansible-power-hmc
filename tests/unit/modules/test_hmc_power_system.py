@@ -16,7 +16,10 @@ test_data1 = [
      "ParameterError: mandatory parameter 'hmc_host' is missing"),
     # when system_name is missing
     ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'action': 'poweroff', 'system_name': None, 'state': None},
-     "ParameterError: mandatory parameter 'system_name' is missing")]
+     "ParameterError: mandatory parameter 'system_name' is missing"),
+    #when metric is provided
+    ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'action': 'poweroff', 'system_name': "stsem_name, 'state': None, metric: 'metric'},
+     "ParameterError: unsupported parameters: metrics"),    
 
 test_data2 = [
     # All PowerOn Power system Testdata
@@ -68,6 +71,17 @@ test_data5 = [
       'requested_num_sys_huge_pages': 'requested_num_sys_huge_pages', 'mem_mirroring_mode': 'sys_firmware_only'},
      "ParameterError: unsupported parameters: new_name, power_on_lpar_start_policy, requested_num_sys_huge_pages, mem_mirroring_mode, pend_mem_region_size")]
 
+ test_data6 = [
+     #All PCM Testdata
+     #when hostname is missing
+     ({'hmc_host': None, 'hmc_auth': hmc_auth, 'action': 'enable_pcm', 'state': 'facts', 'system_name': "system_name", 'metrics': 'metrics'},
+     "ParameterError: mandatory parameter 'hmc_host' is missing"),
+     #when system_name is missing
+     ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'action': 'enable_pcm', 'state': 'facts', 'system_name': None, 'metrics': 'metrics'},
+     "ParameterError: mandatory parameter 'system_name' is missing"),  
+     #when mertrics is mssing
+     ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'action': 'enable_pcm', 'state': 'facts', 'system_name': "system_name", 'metrics': None},
+     "ParameterError: mandatory parameter 'metrics' is missing")]
 
 def common_mock_setup(mocker):
     hmc_power_system = importlib.import_module(IMPORT_HMC_POWER_SYSTEM)
