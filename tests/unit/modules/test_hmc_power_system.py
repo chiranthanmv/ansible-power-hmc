@@ -18,7 +18,7 @@ test_data1 = [
     ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'action': 'poweroff', 'system_name': None, 'state': None, 'metrics': None},
      "ParameterError: mandatory parameter 'system_name' is missing"),
     #when metric is provided
-    ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'action': 'poweroff', 'system_name': "stsem_name, 'state': None, metrics: 'metric'},
+    ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'action': 'poweroff', 'system_name': "stsem_name", 'state': None, 'metrics': 'metric'},
      "ParameterError: unsupported parameters: metrics")]   
 
 test_data2 = [
