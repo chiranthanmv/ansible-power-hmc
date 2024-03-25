@@ -87,7 +87,7 @@ def common_mock_setup(mocker):
     return hmc_power_system
 
 
-@pytest.mark.parametrize("power_system_test_input, expectedError", test_data2)
+@pytest.mark.parametrize("power_system_test_input, expectedError", test_data3)
 def test_call_inside_powerOffManagedSys(mocker, power_system_test_input, expectedError):
     hmc_power_system = common_mock_setup(mocker)
     if 'ParameterError' in expectedError:
