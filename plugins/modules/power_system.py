@@ -167,7 +167,7 @@ EXAMPLES = '''
          password: '{{ hmc_password }}'
     system_name: <managed_system_name>
     state: facts
-    
+
 - name: enable the long-term monitoring
   power_system:
     hmc_host: "{{ inventory_hostname }}"
@@ -178,7 +178,7 @@ EXAMPLES = '''
     metrics:
            - LTM
     action: enable_pcm
-    
+ 
  - name: disable the short-term monitoring
   power_system:
     hmc_host: "{{ inventory_hostname }}"
@@ -251,7 +251,7 @@ def validate_parameters(params):
     elif opr == 'enable_pcm' or opr == 'disable_pcm':
         mandatoryList = ['hmc_host', 'hmc_auth', 'system_name', 'metrics']
         unsupportedList = ['new_name', 'power_off_policy', 'power_on_lpar_start_policy', 'requested_num_sys_huge_pages',
-                           'mem_mirroring_mode', 'pend_mem_region_size',]
+                           'mem_mirroring_mode', 'pend_mem_region_size']
     else:
         mandatoryList = ['hmc_host', 'hmc_auth', 'system_name']
         unsupportedList = ['new_name', 'power_off_policy', 'power_on_lpar_start_policy', 'requested_num_sys_huge_pages',
@@ -423,6 +423,7 @@ def fetchManagedSysDetails(module, params):
 
     return changed, system_prop, None
 
+
 def updatePCM(module, params):
     hmc_host = params['hmc_host']
     hmc_user = params['hmc_auth']['username']
@@ -455,7 +456,7 @@ def updatePCM(module, params):
                     warning = "Enabling AM will automatically enables LTM and EM metrics"
                 elif (('LTM' in metrics or 'EM' in metrics) and disable == 'true'):
                     warning = "Disabling LTM or EM automatically disables AM metrics"
-                if warning != None:
+                if warning is not None:
                     system_prop['info'] = warning
     except (Exception, HmcError) as error:
         error_msg = parse_error_response(error)
@@ -469,6 +470,7 @@ def updatePCM(module, params):
             module.warn(error_msg)
 
     return changed, system_prop, None
+
 
 def perform_task(module):
 
