@@ -19,7 +19,9 @@ import logging
 LOG_FILENAME = "/tmp/ansible_power_hmc.log"
 logger = logging.getLogger(__name__)
 
-PCM_TEMPLATE_NS = 'ManagedSystemPcmPreference xmlns:ManagedSystemPcmPreference="http://www.ibm.com/xmlns/systems/power/firmware/pcm/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/pcm/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2"'
+PCM_TEMPLATE_NS = 'ManagedSystemPcmPreference xmlns:ManagedSystemPcmPreference="http://www.ibm.com/xmlns/systems/power/\
+firmware/pcm/mc/2012_10/" xmlns="http://www.ibm.com/xmlns/systems/power/firmware/pcm/\
+mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2"'
 LPAR_TEMPLATE_NS = 'PartitionTemplate xmlns="http://www.ibm.com/xmlns/systems/power/\
 firmware/templates/mc/2012_10/" xmlns:ns2="http://www.w3.org/XML/1998/namespace/k2"'
 LPAR_NS = 'LogicalPartition xmlns:LogicalPartition="http://www.ibm.com/xmlns/\
@@ -495,7 +497,7 @@ class HmcRestClient:
     def getSystemPCMpreferences(self, system_uuid):
         url = "https://{0}/rest/api/pcm/ManagedSystem/{1}/preferences".format(self.hmc_ip, system_uuid)
         header = {'X-API-Session': self.session,
-                'Content-Type': 'application/xml'}
+                  'Content-Type': 'application/xml'}
         resp = open_url(url,
                         headers=header,
                         method='GET',
@@ -507,11 +509,11 @@ class HmcRestClient:
             return None
         response = resp.read()
         return response
-    
+
     def getPCM(self, system_uuid):
         url = "https://{0}/rest/api/pcm/ManagedSystem/{1}/preferences".format(self.hmc_ip, system_uuid)
         header = {'X-API-Session': self.session,
-                'Content-Type': 'application/xml'}
+                  'Content-Type': 'application/xml'}
         resp = open_url(url,
                         headers=header,
                         method='GET',
@@ -528,10 +530,11 @@ class HmcRestClient:
         logon_res = self.logon()
         url = "https://{0}/rest/api/pcm/ManagedSystem/{1}/preferences".format(self.hmc_ip, system_uuid)
         header = {'Content-Type': 'application/xml',
-                 'X-API-Session': logon_res}
+                  'X-API-Session': logon_res}
         sys_details = self.getPCM(system_uuid)
         doc = xml_strip_namespace(sys_details)
-        preference_map = {'LTM': 'LongTermMonitorEnabled', 'STM': 'ShortTermMonitorEnabled', 'AM': 'AggregationEnabled', 'CLTM': 'ComputeLTMEnabled', 'EM': 'EnergyMonitorEnabled'}
+        preference_map = {'LTM': 'LongTermMonitorEnabled', 'STM': 'ShortTermMonitorEnabled', 
+                          'AM': 'AggregationEnabled', 'CLTM': 'ComputeLTMEnabled', 'EM': 'EnergyMonitorEnabled'}
         existing_enabled = []
         existing_disabled = []
         flag = False
@@ -542,7 +545,7 @@ class HmcRestClient:
             elif path.xpath(preference_map[item])[0].text == "false":
                 existing_disabled.append(item)
         if disable == 'true':
-            #LTM and CM is dependent on AM"
+            # LTM and CM is dependent on AM"
             if ("LTM" in metrics or "EM" in metrics) and "AM" not in metrics:
                 metrics.append("AM")
             preference = list(set(metrics)|set(existing_disabled))
@@ -569,17 +572,17 @@ class HmcRestClient:
             payload_content = etree.tostring(payload_content, encoding='unicode')
             logger.debug(payload_content)
             resp = open_url(url,
-                headers=header,
-                method='POST',
-                data=payload_content,
-                validate_certs=False,
-                force_basic_auth=True,
-                timeout=3600)
+                            headers=header,
+                            method='POST',
+                            data=payload_content,
+                            validate_certs=False,
+                            force_basic_auth=True,
+                            timeout=3600)
             if resp.code != 200:
                 logger.debug("Get of preferences failed. Respsonse code: %d", resp.code)
                 return None
             else:
-                response = resp.read()
+                # response = resp.read()
                 output = dict()
                 for item in preference_map:
                     if (path.xpath(preference_map[item])[0].text == "true"):
@@ -604,7 +607,7 @@ class HmcRestClient:
             return None
         response = resp.read()
         return response
-    
+
     def getVirtualIOServersQuick(self, system_uuid):
         url = "https://{0}/rest/api/uom/ManagedSystem/{1}/VirtualIOServer/quick/All".format(self.hmc_ip, system_uuid)
         header = {'X-API-Session': self.session,
