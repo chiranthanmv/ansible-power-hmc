@@ -178,7 +178,7 @@ EXAMPLES = '''
     metrics:
            - LTM
     action: enable_pcm
- 
+
  - name: disable the short-term monitoring
   power_system:
     hmc_host: "{{ inventory_hostname }}"
