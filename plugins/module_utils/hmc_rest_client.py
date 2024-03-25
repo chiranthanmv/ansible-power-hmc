@@ -533,7 +533,7 @@ class HmcRestClient:
                   'X-API-Session': logon_res}
         sys_details = self.getPCM(system_uuid)
         doc = xml_strip_namespace(sys_details)
-        preference_map = {'LTM': 'LongTermMonitorEnabled', 'STM': 'ShortTermMonitorEnabled', 
+        preference_map = {'LTM': 'LongTermMonitorEnabled', 'STM': 'ShortTermMonitorEnabled',
                           'AM': 'AggregationEnabled', 'CLTM': 'ComputeLTMEnabled', 'EM': 'EnergyMonitorEnabled'}
         existing_enabled = []
         existing_disabled = []
@@ -548,8 +548,8 @@ class HmcRestClient:
             # LTM and CM is dependent on AM"
             if ("LTM" in metrics or "EM" in metrics) and "AM" not in metrics:
                 metrics.append("AM")
-            preference = list(set(metrics)|set(existing_disabled))
-            if (set(existing_disabled) != set(preference) and (set(preference).issubset(set(existing_disabled))==False)):
+            preference = list(set(metrics) | set(existing_disabled))
+            if (set(existing_disabled) != set(preference) and (set(preference).issubset(set(existing_disabled)) is False)):
                 flag = True
                 for item in existing_enabled:
                     path.xpath(preference_map[item])[0].text = "true"
@@ -559,15 +559,15 @@ class HmcRestClient:
             if "AM" in metrics and ("LTM" not in metrics or "EM" not in metrics):
                 metrics.append("LTM")
                 metrics.append("EM")
-            preference = list(set(metrics)|set(existing_enabled))
-            if (set(existing_enabled) != set(preference) and  (set(preference).issubset(set(existing_enabled))==False)):
+            preference = list(set(metrics) | set(existing_enabled))
+            if (set(existing_enabled) != set(preference) and (set(preference).issubset(set(existing_enabled)) is False)):
                 flag = True
                 for item in preference:
                     path.xpath(preference_map[item])[0].text = "true"
-        if flag == True:
+        if flag is True:
             payload_content = etree.tostring(path)
-            payload_content  = payload_content.decode("utf-8").replace("ManagedSystemPcmPreference", PCM_TEMPLATE_NS, 1)
-            payload_content = payload_content.replace('\n',' ').replace('\"','\'')
+            payload_content = payload_content.decode("utf-8").replace("ManagedSystemPcmPreference", PCM_TEMPLATE_NS, 1)
+            payload_content = payload_content.replace('\n', ' ').replace('\"', '\'')
             payload_content = etree.fromstring(payload_content)
             payload_content = etree.tostring(payload_content, encoding='unicode')
             logger.debug(payload_content)
