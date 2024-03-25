@@ -54,8 +54,7 @@ test_data4 = [
      "ParameterError: mandatory parameter 'system_name' is missing"),
     # when new_name', 'power_off_policy', 'power_on_lpar_start_policy mentiones
     ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'action': 'modify_hwres', 'system_name': "system_name", 'new_name': 'new_name', 'power_off_policy': 0,
-      'power_on_lpar_start_policy': 'power_on_lpar_start_policy', 'state': None, 'pend_mem_region_size': '256', 'mem_mirroring_mode': 'sys_firmware_only', 
-      'metrics': None},
+      'power_on_lpar_start_policy': 'power_on_lpar_start_policy', 'state': None, 'pend_mem_region_size': '256', 'mem_mirroring_mode': 'sys_firmware_only'},
      "ParameterError: unsupported parameters: new_name, power_on_lpar_start_policy")]
 
 test_data5 = [
@@ -69,7 +68,7 @@ test_data5 = [
     # when new_name', 'power_off_policy', 'power_on_lpar_start_policy,requested_num_sys_huge_pages, mem_mirroring_mode, pend_mem_region_size are mentioned
     ({'hmc_host': "0.0.0.0", 'hmc_auth': hmc_auth, 'action': None, 'system_name': "system_name", 'new_name': 'new_name', 'power_off_policy': 0,
       'power_on_lpar_start_policy': 'power_on_lpar_start_policy', 'state': 'facts', 'pend_mem_region_size': '256',
-      'requested_num_sys_huge_pages': 'requested_num_sys_huge_pages', 'mem_mirroring_mode': 'sys_firmware_only', 'metrics': None},
+      'requested_num_sys_huge_pages': 'requested_num_sys_huge_pages', 'mem_mirroring_mode': 'sys_firmware_only'},
      "ParameterError: unsupported parameters: new_name, power_on_lpar_start_policy, requested_num_sys_huge_pages, mem_mirroring_mode, pend_mem_region_size")]
 
 test_data6 = [
