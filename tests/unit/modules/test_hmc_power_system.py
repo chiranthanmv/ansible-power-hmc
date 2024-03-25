@@ -72,7 +72,7 @@ test_data5 = [
       'requested_num_sys_huge_pages': 'requested_num_sys_huge_pages', 'mem_mirroring_mode': 'sys_firmware_only', 'metrics': None},
      "ParameterError: unsupported parameters: new_name, power_on_lpar_start_policy, requested_num_sys_huge_pages, mem_mirroring_mode, pend_mem_region_size")]
 
- test_data6 = [
+test_data6 = [
      #All PCM Testdata
      #when hostname is missing
      ({'hmc_host': None, 'hmc_auth': hmc_auth, 'action': 'enable_pcm', 'state': 'facts', 'system_name': "system_name", 'metrics': 'metrics'},
@@ -136,6 +136,16 @@ def test_call_inside_modifySystemHardwareResources(mocker, power_system_test_inp
 
 
 @pytest.mark.parametrize("power_system_test_input, expectedError", test_data5)
+def test_call_inside_fetchManagedSysDetails(mocker, power_system_test_input, expectedError):
+    hmc_power_system = common_mock_setup(mocker)
+    if 'ParameterError' in expectedError:
+        with pytest.raises(ParameterError) as e:
+            hmc_power_system.fetchManagedSysDetails(hmc_power_system, power_system_test_input)
+        assert expectedError == repr(e.value)
+    else:
+        hmc_power_system.fetchManagedSysDetails(hmc_power_system, power_system_test_input)
+
+@pytest.mark.parametrize("power_system_test_input, expectedError", test_data6)
 def test_call_inside_fetchManagedSysDetails(mocker, power_system_test_input, expectedError):
     hmc_power_system = common_mock_setup(mocker)
     if 'ParameterError' in expectedError:
