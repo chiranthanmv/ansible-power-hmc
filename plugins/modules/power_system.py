@@ -91,14 +91,24 @@ options:
             - This option works with C(modify_hwres) I(action).
         type: str
         choices: ['auto', '16', '32', '64', '128', '256']
+    metrics:
+        description:
+            - Provides option five types of utilization data
+            - Long Term Monitor(LTM), Short Term Monitor(STM), Aggregated metrics(AM), ComputeLTM(CLTM), EnergyMonitor(EM).
+            - AM collects data from LTM and EM, hence when the AM is enabled automatically LTM and EM will be enabled.
+            - When LTM or EM is disabled then automatically the AM will also get disabled.
+         type: list
+         choices: ['LTM', 'STM', 'AM', 'CLTM', 'EM']
     action:
         description:
             - C(poweroff) poweroff a specified I(system_name).
             - C(poweron) poweron a specified I(system_name).
             - C(modify_syscfg) Makes system configurations of specified I(system_name).
             - C(modify_hwres) Makes hardware resource configurations of specified I(system_name).
+            - C(enable_pcm) Enables the Performance and Capacity Monitoring for specified types of utilization data.
+            - C(disable_pcm) Disables the Performance and Capacity Monitoring for specified types of utilization data.
         type: str
-        choices: ['poweron', 'poweroff', 'modify_syscfg', 'modify_hwres']
+        choices: ['poweron', 'poweroff', 'modify_syscfg', 'modify_hwres', 'enable_pcm', 'disable_pcm']
     state:
         description:
             - C(facts) fetch details of specified I(system_name)
@@ -158,6 +168,28 @@ EXAMPLES = '''
     system_name: <managed_system_name>
     state: facts
 
+- name: enable the long-term monitoring
+  power_system:
+    hmc_host: "{{ inventory_hostname }}"
+    hmc_auth:
+         username: '{{ ansible_user }}'
+         password: '{{ hmc_password }}'
+    system_name: <managed_system_name>
+    metrics:
+           - LTM
+    action: enable_pcm
+
+ - name: disable the short-term monitoring
+  power_system:
+    hmc_host: "{{ inventory_hostname }}"
+    hmc_auth:
+         username: '{{ ansible_user }}'
+         password: '{{ hmc_password }}'
+    system_name: <managed_system_name>
+    metrics:
+           - STM
+    action: disble_pcm
+
 '''
 
 RETURN = '''
@@ -212,14 +244,18 @@ def validate_parameters(params):
 
     if opr == 'modify_syscfg':
         mandatoryList = ['hmc_host', 'hmc_auth', 'system_name']
-        unsupportedList = ['requested_num_sys_huge_pages', 'mem_mirroring_mode', 'pend_mem_region_size']
+        unsupportedList = ['requested_num_sys_huge_pages', 'mem_mirroring_mode', 'pend_mem_region_size', 'metrics']
     elif opr == 'modify_hwres':
         mandatoryList = ['hmc_host', 'hmc_auth', 'system_name']
-        unsupportedList = ['new_name', 'power_off_policy', 'power_on_lpar_start_policy']
+        unsupportedList = ['new_name', 'power_off_policy', 'power_on_lpar_start_policy', 'metrics']
+    elif opr == 'enable_pcm' or opr == 'disable_pcm':
+        mandatoryList = ['hmc_host', 'hmc_auth', 'system_name', 'metrics']
+        unsupportedList = ['new_name', 'power_off_policy', 'power_on_lpar_start_policy', 'requested_num_sys_huge_pages',
+                           'mem_mirroring_mode', 'pend_mem_region_size']
     else:
         mandatoryList = ['hmc_host', 'hmc_auth', 'system_name']
         unsupportedList = ['new_name', 'power_off_policy', 'power_on_lpar_start_policy', 'requested_num_sys_huge_pages',
-                           'mem_mirroring_mode', 'pend_mem_region_size']
+                           'mem_mirroring_mode', 'pend_mem_region_size', 'metrics']
 
     collate = []
     for eachMandatory in mandatoryList:
@@ -388,6 +424,54 @@ def fetchManagedSysDetails(module, params):
     return changed, system_prop, None
 
 
+def updatePCM(module, params):
+    hmc_host = params['hmc_host']
+    hmc_user = params['hmc_auth']['username']
+    password = params['hmc_auth']['password']
+    system_name = params['system_name']
+    metrics = params['metrics']
+    disable = 'false'
+    if params['action'] == 'disable_pcm':
+        disable = 'true'
+    system_prop = None
+    system_uuid = None
+    changed = False
+    warning = None
+    validate_parameters(params)
+    try:
+        rest_conn = HmcRestClient(hmc_host, hmc_user, password)
+    except Exception as error:
+        error_msg = parse_error_response(error)
+        module.fail_json(msg=error_msg)
+
+    try:
+        system_uuid, server_dom = rest_conn.getManagedSystem(system_name)
+        if not system_uuid:
+            module.fail_json(msg="Given system is not present")
+        else:
+            system_prop = rest_conn.updatePCM(system_uuid, metrics, disable)
+            if system_prop:
+                changed = True
+                if ('AM' in metrics and disable == 'false'):
+                    warning = "Enabling AM will automatically enables LTM and EM metrics"
+                elif (('LTM' in metrics or 'EM' in metrics) and disable == 'true'):
+                    warning = "Disabling LTM or EM automatically disables AM metrics"
+                if warning is not None:
+                    system_prop['info'] = warning
+    except (Exception, HmcError) as error:
+        error_msg = parse_error_response(error)
+        logger.debug("Line number: %d exception: %s", sys.exc_info()[2].tb_lineno, repr(error))
+        module.fail_json(msg=error_msg)
+    finally:
+        try:
+            rest_conn.logoff()
+        except Exception as logoff_error:
+            error_msg = parse_error_response(logoff_error)
+            module.warn(error_msg)
+
+    return changed, system_prop, None
+
+
 def perform_task(module):
 
     params = module.params
@@ -396,7 +480,9 @@ def perform_task(module):
         "poweroff": powerOffManagedSys,
         "facts": fetchManagedSysDetails,
         "modify_syscfg": modifySystemConfiguration,
-        "modify_hwres": modifySystemHardwareResources
+        "modify_hwres": modifySystemHardwareResources,
+        "enable_pcm": updatePCM,
+        "disable_pcm": updatePCM
     }
     oper = 'action'
     if params['action'] is None:
@@ -426,8 +512,9 @@ def run_module():
         power_on_lpar_start_policy=dict(type='str', choices=['autostart', 'userinit', 'autorecovery']),
         requested_num_sys_huge_pages=dict(type='int'),
         mem_mirroring_mode=dict(type='str', choices=['none', 'sys_firmware_only']),
+        metrics=dict(type='list', elements='str', choices=['LTM', 'STM', 'AM', 'CLTM', 'EM']),
         pend_mem_region_size=dict(type='str', choices=['auto', '16', '32', '64', '128', '256']),
-        action=dict(type='str', choices=['poweron', 'poweroff', 'modify_syscfg', 'modify_hwres']),
+        action=dict(type='str', choices=['poweron', 'poweroff', 'modify_syscfg', 'modify_hwres', 'enable_pcm', 'disable_pcm']),
         state=dict(type='str', choices=['facts']),
     )
 
@@ -439,7 +526,9 @@ def run_module():
                      ['action', 'poweron', ['hmc_host', 'hmc_auth', 'system_name']],
                      ['action', 'poweroff', ['hmc_host', 'hmc_auth', 'system_name']],
                      ['action', 'modify_syscfg', ['hmc_host', 'hmc_auth', 'system_name']],
-                     ['action', 'modify_hwres', ['hmc_host', 'hmc_auth', 'system_name']]
+                     ['action', 'modify_hwres', ['hmc_host', 'hmc_auth', 'system_name']],
+                     ['action', 'enable_pcm', ['hmc_host', 'hmc_auth', 'system_name', 'metrics']],
+                     ['action', 'disable_pcm', ['hmc_host', 'hmc_auth', 'system_name', 'metrics']],
                      ],
     )
 
