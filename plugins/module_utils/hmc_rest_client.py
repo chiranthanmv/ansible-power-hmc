@@ -551,8 +551,6 @@ class HmcRestClient:
             preference = list(set(metrics) | set(existing_disabled))
             if (set(existing_disabled) != set(preference) and (set(preference).issubset(set(existing_disabled)) is False)):
                 flag = True
-                for item in existing_enabled:
-                    path.xpath(preference_map[item])[0].text = "true"
                 for item in preference:
                     path.xpath(preference_map[item])[0].text = "false"
         else:
