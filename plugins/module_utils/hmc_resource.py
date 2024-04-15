@@ -314,9 +314,8 @@ class Hmc():
                 logger.debug(cec_state)
                 stateSuccess = True
                 break
-            else:
-                logger.debug(cec_state)
-                waited += POLL_INTERVAL_IN_SEC
+            logger.debug(cec_state)
+            waited += POLL_INTERVAL_IN_SEC
 
             # waiting for 30 seconds
             time.sleep(POLL_INTERVAL_IN_SEC)
@@ -572,8 +571,7 @@ class Hmc():
             if conf_dict['rmc_state'] == 'active':
                 rmcActive = True
                 break
-            else:
-                waited += POLL_INTERVAL_IN_SEC
+            waited += POLL_INTERVAL_IN_SEC
             time.sleep(POLL_INTERVAL_IN_SEC)
         if not rmcActive:
             res = self.getPartitionRefcode(system_name, name)

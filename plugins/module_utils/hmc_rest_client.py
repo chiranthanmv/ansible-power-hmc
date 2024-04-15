@@ -1806,9 +1806,8 @@ class HmcRestClient:
                         FCMappingsTag.append(etree.XML(payload))
                         flag = True
                         break
-                    else:
-                        raise HmcError("There are only {0} available ports in the fc_port_name: {1}"
-                                       .format(vios_npiv_dict['AvailablePorts'], npiv_settings['fc_port_name']))
+                    raise HmcError("There are only {0} available ports in the fc_port_name: {1}"
+                                   .format(vios_npiv_dict['AvailablePorts'], npiv_settings['fc_port_name']))
             else:
                 raise HmcError("fc_port_name: {0} provided is not found in the vios: {1}".format(npiv_settings['fc_port_name'], vios_name, ))
         if flag:
