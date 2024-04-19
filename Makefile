@@ -31,7 +31,6 @@ help:
 	@echo "install-unit-test-requirements 			install python modules needed \
 	run unit testing"
 	@echo "module-lint MODULE=<module path> 		lint ansible module"         
-	@echo "sanity-test MODULE=<module path>		run sanity test on the collections"
 	@echo "unit-test TEST=<test path>			run unit test suite for the collection"
 	@echo "clean						clean junk files"
 
@@ -39,13 +38,8 @@ help:
 clean:
 	@rm -rf tests/unit/plugins/modules/__pycache__
 	@rm -rf tests/unit/plugins/modules/common/__pycache__
-	@rm -rf collections/ansible_collections
 	@rm -rf plugins/modules/__pycache__
-	@rm -rf ibm-power_hmc-1.8.2.tar.gz
-
-.PHONY: uninstall-pylint
-uninstall-pylint:
-	python -m pip uninstall --yes pylint
+	@rm -rf ibm-power_hmc-*
 
 ######################################################################################
 # installation targets
