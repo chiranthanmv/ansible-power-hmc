@@ -170,13 +170,6 @@ class Hmc():
         result = self.hmcconn.execute(hmcCmd)
         return result
 
-    def listHMCPTF(self, locationType, configDict=None):
-        hmcCmd = self.CMD['LSUPDHMC'] + \
-            self.OPT['LSUPDHMC']['-T'][locationType.upper()]
-
-        result = self.hmcconn.execute(hmcCmd)
-        return self.cmdClass.parseMultiLineCSV(result)
-
     def configAltDisk(self, enable, mode):
         chhhmcCmd = self.CMD['CHHMC'] + \
             self.OPT['CHHMC']['-C']['ALTDISKBOOT'] +  \
