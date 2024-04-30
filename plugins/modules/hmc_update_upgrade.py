@@ -31,6 +31,7 @@ description:
     - Upgrades the HMC by obtaining  the required  files  from a remote server or from the HMC hard disk. The files are transferred
       onto a special partition on the HMC hard disk. After the files have been transferred, HMC will boot from this partition
       and perform the upgrade.
+    - Update the HMC from IBM Fix Central website
 version_added: 1.0.0
 requirements:
 - Python >= 3
@@ -65,12 +66,14 @@ options:
                 description:
                     - The type of location which contains the corrective service ISO image.
                       Valid values are C(disk) for the HMC hard disk, C(ftp) for an FTP site,
-                      C(sftp) for a secure FTP (SFTP) site, C(nfs) for an NFS file system.
+                      C(sftp) for a secure FTP (SFTP) site, C(nfs) for an NFS file system and
+                      C(ibmwebsite) for update through IBM fixcentral website.
                     - When the location type is set to C(disk), first it looks for the C(build_file) in HMC hard disk
                       if it doesn't exist then it looks for C(build_file) in the Ansible Controller node.
+                    - ibmwebsite location type supports only update operation and HMC1030 releas onwards
                 type: str
                 required: true
-                choices: ['disk', 'ftp', 'sftp', 'nfs']
+                choices: ['disk', 'ftp', 'sftp', 'nfs', 'ibmwebsite']
             hostname:
                 description:
                     - The hostname or IPaddress of the remote server where the corrective
@@ -108,15 +111,27 @@ options:
                       During update of the HMC if I(location_type=disk) and ISO image is kept in Ansible controller node or HMC hard disk,
                       this option should be provided with the ansible control node path in which ISO file or network install image is kept.
                 type: str
+            ptf:
+                description:
+                    - The name of the PTF to install.
+                      This option is required when the ISO image is located on the IBM Fix Central website. Otherwise, this option is not valid.
+                      This option is required only when the location_type is 'ibmwebsite'.
+                      This option is available for HMC versions from 1030 onwards.
+                type: str
     state:
         description:
             - The desired build state of the target HMC.
             - C(facts) does not change anything on the HMC and returns current driver/build level of HMC.
             - C(updated) ensures the target HMC is updated with given corrective service ISO image.
             - C(upgraded) ensures the target HMC is upgraded with given upgrade files.
-        required: true
         type: str
         choices: ['facts', 'updated', 'upgraded']
+    action:
+        description:
+            - C(listptf) lists available Hardware Management Console (HMC) updates from the IBM Fix Central website.
+            - This option is available for HMC versions from 1030 onwards
+        type: str
+        choices: ['listptf']
 '''
 
 EXAMPLES = '''
@@ -155,6 +170,24 @@ EXAMPLES = '''
           build_file: /Images/MF71190-10.2.1041.0-2308160028-x86_64.iso
       state: updated
 
+- name: List all the available ptfs
+  hmc_update_upgrade:
+      hmc_host: '{{ inventory_hostname }}'
+      hmc_auth:
+         username: '{{ ansible_user }}'
+         password: '{{ hmc_password }}'
+      action: listptf
+
+- name: Update the HMC to the V10R2M1041(ifix) build level from ibmwebsite
+  hmc_update_upgrade:
+      hmc_host: '{{ inventory_hostname }}'
+      hmc_auth:
+         username: '{{ ansible_user }}'
+         password: '{{ hmc_password }}'
+      build_config:
+          location_type: ibmwebsite
+          ptf: vMF71409
+      state: updated
 '''
 
 RETURN = '''
@@ -170,6 +203,7 @@ from ansible_collections.ibm.power_hmc.plugins.module_utils.hmc_resource import 
 from ansible_collections.ibm.power_hmc.plugins.module_utils.hmc_exceptions import ParameterError
 from ansible_collections.ibm.power_hmc.plugins.module_utils.hmc_exceptions import Error
 from ansible_collections.ibm.power_hmc.plugins.module_utils.hmc_exceptions import HmcError
+from ansible_collections.ibm.power_hmc.plugins.module_utils.hmc_exceptions import VersionError
 import sys
 import logging
 LOG_FILENAME = "/tmp/ansible_power_hmc.log"
@@ -198,7 +232,7 @@ def command_option_checker(config):
     """
     if config['location_type'] in ['ftp', 'sftp']:
         mandatoryList = ['hostname', 'build_file', 'userid', 'passwd']
-        unsupportedList = ['mount_location']
+        unsupportedList = ['mount_location', 'ptf']
 
         if config['location_type'] == 'sftp':
             if not (config['sshkey_file'] or config['passwd']):
@@ -213,12 +247,15 @@ def command_option_checker(config):
 
     elif config['location_type'] == 'nfs':
         mandatoryList = ['hostname', 'build_file', 'mount_location']
-        unsupportedList = ['userid', 'passwd', 'sshkey_file']
+        unsupportedList = ['userid', 'passwd', 'sshkey_file', 'ptf']
     elif config['location_type'] == 'disk':
         mandatoryList = ['build_file']
-        unsupportedList = ['userid', 'passwd', 'sshkey_file', 'hostname', 'mount_location']
+        unsupportedList = ['userid', 'passwd', 'sshkey_file', 'hostname', 'mount_location', 'ptf']
     elif config['location_type'] in ['usb', 'dvd']:
         raise ParameterError("not supporting the option '%s'" % (config['location_type']))
+    elif config['location_type'] == 'ibmwebsite':
+        mandatoryList = ['ptf']
+        unsupportedList = ['userid', 'passwd', 'sshkey_file', 'hostname', 'mount_location', 'build_file']
     else:
         raise ParameterError("not supporting the location_type option: '%s'" % (config['location_type']))
 
@@ -344,6 +381,29 @@ def facts(module, params):
     return changed, version_details, None
 
 
+def list_ptf(module, params):
+    hmc_host = params['hmc_host']
+    hmc_user = params['hmc_auth']['username']
+    password = params['hmc_auth']['password']
+    changed = False
+    hmc_conn = None
+    ptf_details = None
+
+    if params['build_config']:
+        raise ParameterError("not supporting build_config option")
+
+    hmc_conn = HmcCliConnection(module, hmc_host, hmc_user, password)
+    hmc = Hmc(hmc_conn)
+    initial_version_details = hmc.listHMCVersion()
+
+    if int(initial_version_details["SERVICEPACK"]) < 1030:
+        raise VersionError("List ptf is supported from 1030 version onwards.")
+    else:
+        ptf_details = hmc.listHMCPTF('ibmwebsite')
+
+    return changed, ptf_details, None
+
+
 def upgrade_hmc(module, params):
     hmc_host = params['hmc_host']
     hmc_user = params['hmc_auth']['username']
@@ -363,6 +423,9 @@ def upgrade_hmc(module, params):
     command_option_checker(params['build_config'])
 
     locationType = params['build_config']['location_type']
+
+    if locationType == 'ibmwebsite':
+        raise ParameterError("Upgrade through ibmwebsite is not supported ")
 
     if locationType == 'disk':
         is_img_in_hmc = check_image_in_hmc(module, params)
@@ -493,10 +556,17 @@ def update_hmc(module, params):
         else:
             otherConfig['-F'] = '/{0}/{1}'.format(params['build_config']['build_file'], iso_file)
 
+    initial_version_details = hmc.listHMCVersion()
+
+    # In case of ibmwebsite, provide the ptf number
+    if locationType == 'ibmwebsite':
+        if int(initial_version_details["SERVICEPACK"]) >= 1030:
+            otherConfig['--PTF'] = params['build_config']['ptf']
+        else:
+            raise VersionError("Update through ibmwebsite supported from 1030 version onwards.")
+
     # this option to restart hmc after configuration
     otherConfig['-R'] = " "
-
-    initial_version_details = hmc.listHMCVersion()
 
     hmc.updateHMC(locationType, configDict=otherConfig)
     version_details = {}
@@ -527,7 +597,16 @@ def perform_task(module):
         "updated": update_hmc,
         "facts": facts,
         "upgraded": upgrade_hmc,
+        "listptf": list_ptf,
     }
+
+    oper = 'state'
+    if params['state'] is None:
+        oper = 'action'
+    try:
+        return actions[params[oper]](module, params)
+    except (ParameterError, HmcError, Error) as error:
+        return False, repr(error), None
 
     if not params['hmc_auth']:
         return False, "missing credential info", None
@@ -557,24 +636,28 @@ def run_module():
                       ),
         build_config=dict(type='dict',
                           options=dict(
-                              location_type=dict(required=True, type='str', choices=['disk', 'ftp', 'sftp', 'nfs']),
+                              location_type=dict(required=True, type='str', choices=['disk', 'ftp', 'sftp', 'nfs', 'ibmwebsite']),
                               hostname=dict(type='str'),
                               userid=dict(type='str'),
                               passwd=dict(type='str', no_log=True),
                               sshkey_file=dict(type='str'),
                               mount_location=dict(type='str'),
-                              build_file=dict(type='str')
+                              build_file=dict(type='str'),
+                              ptf=dict(type='str')
                           )
                           ),
-        state=dict(required=True, type='str',
-                   choices=['updated', 'upgraded', 'facts'])
+        state=dict(type='str', choices=['updated', 'upgraded', 'facts']),
+        action=dict(type='str', choices=['listptf'])
     )
 
     module = AnsibleModule(
         argument_spec=module_args,
+        mutually_exclusive=[('state', 'action')],
+        required_one_of=[('state', 'action')],
         required_if=[['state', 'facts', ['hmc_host', 'hmc_auth']],
                      ['state', 'updated', ['hmc_host', 'hmc_auth', 'build_config']],
-                     ['state', 'upgraded', ['hmc_host', 'hmc_auth', 'build_config']]
+                     ['state', 'upgraded', ['hmc_host', 'hmc_auth', 'build_config']],
+                     ['action', 'listptf', ['hmc_host', 'hmc_auth']],
                      ]
     )
 
