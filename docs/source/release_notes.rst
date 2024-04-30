@@ -229,7 +229,7 @@ Version 1.9.0
 -------------
 Notes
   * power_system: Support for PCM metrics enable and disable
-  * hmc_update_upgrade: Support for HMC update through ibmwebsite
+  * hmc_update_upgrade: Support for HMC update through ibmwebsite(IBM Fixcentral website) and listing available PTFs
   * Document Corrections
 
 

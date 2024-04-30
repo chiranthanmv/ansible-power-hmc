@@ -67,7 +67,7 @@ options:
                     - The type of location which contains the corrective service ISO image.
                       Valid values are C(disk) for the HMC hard disk, C(ftp) for an FTP site,
                       C(sftp) for a secure FTP (SFTP) site, C(nfs) for an NFS file system and
-                      C(ibmwebsite) for update through fixcentral website.
+                      C(ibmwebsite) for update through IBM fixcentral website.
                     - When the location type is set to C(disk), first it looks for the C(build_file) in HMC hard disk
                       if it doesn't exist then it looks for C(build_file) in the Ansible Controller node.
                     - ibmwebsite location type supports only update operation and HMC1030 releas onwards
