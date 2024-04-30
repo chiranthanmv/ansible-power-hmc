@@ -66,9 +66,11 @@ options:
                 description:
                     - The type of location which contains the corrective service ISO image.
                       Valid values are C(disk) for the HMC hard disk, C(ftp) for an FTP site,
-                      C(sftp) for a secure FTP (SFTP) site, C(nfs) for an NFS file system.
+                      C(sftp) for a secure FTP (SFTP) site, C(nfs) for an NFS file system and
+                      C(ibmwebsite) for update through fixcentral website.
                     - When the location type is set to C(disk), first it looks for the C(build_file) in HMC hard disk
                       if it doesn't exist then it looks for C(build_file) in the Ansible Controller node.
+                    - ibmwebsite location type supports only update operation and HMC1030 releas onwards
                 type: str
                 required: true
                 choices: ['disk', 'ftp', 'sftp', 'nfs', 'ibmwebsite']
@@ -113,8 +115,8 @@ options:
                 description:
                     - The name of the PTF to install.
                       This option is required when the ISO image is located on the IBM Fix Central website. Otherwise, this option is not valid.
-                      This option is required only when the location_type is 'ibmwebsite'
-                      This option is available for HMC versions from 1030 onwards
+                      This option is required only when the location_type is 'ibmwebsite'.
+                      This option is available for HMC versions from 1030 onwards.
                 type: str
     state:
         description:
@@ -126,7 +128,7 @@ options:
         choices: ['facts', 'updated', 'upgraded']
     action:
         description:
-            - c(listptf) lists available Hardware Management Console (HMC) updates from the IBM Fix Central website.
+            - C(listptf) lists available Hardware Management Console (HMC) updates from the IBM Fix Central website.
             - This option is available for HMC versions from 1030 onwards
         type: str
         choices: ['listptf']

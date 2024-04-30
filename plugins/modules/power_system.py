@@ -94,10 +94,11 @@ options:
         choices: ['auto', '16', '32', '64', '128', '256']
     metrics:
         description:
-            - Provides option five types of utilization data
+            - Provides five types of utilization data
             - Long Term Monitor(LTM), Short Term Monitor(STM), Aggregated metrics(AM), ComputeLTM(CLTM), EnergyMonitor(EM).
             - AM collects data from LTM and EM, hence when the AM is enabled automatically LTM and EM will be enabled.
             - When LTM or EM is disabled then automatically the AM will also get disabled.
+            - This option works only with C(enable_pcm) and C(disable_pcm) I(action).
         type: list
         elements: str
         choices: ['LTM', 'STM', 'AM', 'CLTM', 'EM']
