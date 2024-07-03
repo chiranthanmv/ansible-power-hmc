@@ -666,6 +666,7 @@ class Hmc():
             lssyscfgCmd += self.OPT['LSSYSCFG']['-F'] + filter
 
         raw_result = self.hmcconn.execute(lssyscfgCmd)
+        raw_result = raw_result.replace("Power Off", "Off")
         lines = raw_result.split()
 
         return lines
@@ -679,6 +680,7 @@ class Hmc():
             lssyscfgCmd += self.OPT['LSSYSCFG']['-F'] + filter
 
         raw_result = self.hmcconn.execute(lssyscfgCmd)
+        raw_result = raw_result.replace("Power Off", "Off")
         lines = raw_result.split()
 
         return lines
