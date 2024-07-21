@@ -26,6 +26,7 @@ notes:
     - Partition creation is not supported for resource role-based user in HMC Version prior to 951.
     - C(install_os) action doesn't support installation of IBMi OS.
     - Only state=absent and action=install_os operations support passwordless authentication.
+    - install_settings suboption "location_code" supports AIX installation, "vm_mac" supports Linux installation on LPAR
 description:
     - "Creates AIX/Linux or IBMi partition with specified configuration details on mentioned system"
     - "Or Deletes specified AIX/Linux or IBMi partition on specified system"
@@ -327,8 +328,13 @@ options:
                 type: str
             location_code:
                 description:
-                    - Network adapter location code to be used while installing OS.
+                    - Network adapter location code to be used while installing AIX OS.
                     - If user doesn't provide, it automatically picks the first pingable adapter attached to the partition.
+                type: str
+            vm_mac:
+                description:
+                    - mac address of lpar
+                    - Used while installing linux OS on lpar, provided by user
                 type: str
             nim_vlan_id:
                 description:
@@ -529,7 +535,7 @@ EXAMPLES = '''
       os_type: aix_linux
       state: present
 
-- name: Install Aix/Linux OS on LPAR from NIM Server.
+- name: Install Aix OS on LPAR from NIM Server.
   powervm_lpar_instance:
       hmc_host: '{{ inventory_hostname }}'
       hmc_auth: "{{ curr_hmc_auth }}"
@@ -540,6 +546,20 @@ EXAMPLES = '''
          nim_ip: <IP_address of the NIM Server>
          nim_gateway: <Gateway IP_Addres>
          nim_subnetmask: <Subnetmask IP_Address>
+      action: install_os
+
+- name: Install Linux OS on LPAR from NIM Server.
+  powervm_lpar_instance:
+      hmc_host: '{{ inventory_hostname }}'
+      hmc_auth: "{{ curr_hmc_auth }}"
+      system_name: <system_name>
+      vm_name: <vm_name>
+      install_settings:
+         vm_ip: <IP_address of the lpar>
+         nim_ip: <IP_address of the NIM Server>
+         nim_gateway: <Gateway IP_Addres>
+         nim_subnetmask: <Subnetmask IP_Address>
+         vm_mac: <mac address of lpar>
       action: install_os
 
 '''
@@ -1491,6 +1511,7 @@ def install_aix_os(module, params):
     nim_gateway = params['install_settings']['nim_gateway']
     nim_subnetmask = params['install_settings']['nim_subnetmask']
     location_code = params['install_settings']['location_code']
+    vm_mac = params['install_settings']['vm_mac']
     profile_name = params['prof_name'] or 'default_profile'
     nim_vlan_id = params['install_settings']['nim_vlan_id'] or '0'
     nim_vlan_priority = params['install_settings']['nim_vlan_priority'] or '0'
@@ -1503,6 +1524,9 @@ def install_aix_os(module, params):
     hmc_conn = HmcCliConnection(module, hmc_host, hmc_user, password)
     hmc = Hmc(hmc_conn)
 
+    if location_code and vm_mac:
+        module.fail_json(msg="One of location_code/vm_mac should be specified to install AIX/Linux OS respectively")
+
     if timeout < 10:
         module.fail_json(msg="timeout should be more than 10mins")
     try:
@@ -1512,6 +1536,9 @@ def install_aix_os(module, params):
 
         if location_code:
             hmc.installOSFromNIM(location_code, nim_ip, nim_gateway, vm_ip, nim_vlan_id, nim_vlan_priority, nim_subnetmask, vm_name, profile_name, system_name)
+        elif vm_mac:
+            hmc.installOSFromNIM(location_code, nim_ip, nim_gateway, vm_ip, None, None, nim_subnetmask, vm_name, profile_name, system_name, vm_mac)
+            hmc.checkconsolelog(module, vm_ip, hmc_host, hmc_user, password, system_name, vm_name)
         else:
             dvcdictlt = hmc.fetchIODetailsForNetboot(nim_ip, nim_gateway, vm_ip, vm_name, profile_name, system_name, nim_subnetmask)
             for dvcdict in dvcdictlt:
@@ -1529,9 +1556,11 @@ def install_aix_os(module, params):
             changed = True
         elif ref_code in ['', '00']:
             changed = True
-            warn_msg = "AIX installation has been successfull but RMC didnt come up, please check the HMC firewall and security"
+            warn_msg = "AIX/Linux installation has been successfull but RMC didnt come up, please check the HMC firewall and security"
+        elif vm_mac and "linux" in vm_property['os_version'].lower():
+            warn_msg = "Partition is up with Linux OS, Wait for Post Installation verification for the installation Success/Failure"
         else:
-            module.fail_json(msg="AIX Installation failed even after waiting for " + str(timeout) + " mins and the reference code is " + ref_code)
+            module.fail_json(msg="AIX/Linux Installation failed even after waiting for " + str(timeout) + " mins and the reference code is " + ref_code)
     except HmcError as install_error:
         return False, repr(install_error), None
 
@@ -1677,6 +1706,7 @@ def run_module():
                            nim_gateway=dict(type='str', required=True),
                            nim_subnetmask=dict(type='str', required=True),
                            location_code=dict(type='str'),
+                           vm_mac=dict(type='str'),
                            nim_vlan_id=dict(type='str'),
                            nim_vlan_priority=dict(type='str'),
                            timeout=dict(type='int')
