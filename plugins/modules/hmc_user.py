@@ -725,7 +725,7 @@ def ensure_update(module, params):
         if attributes:
             if m_config["NAME"] == 'hscroot':
                 for key in attributes.keys():
-                    if key not in  ['passwd', 'session_timeout', 'verify_timeout', 'idle_timeout']:
+                    if key not in ['passwd', 'session_timeout', 'verify_timeout', 'idle_timeout']:
                         attributes[key] = None
                 warning_msg = "For hscroot,root user only password,session_timeout,verify_timeout,idle_timeout can be changed"
             m_config.update(attributes)
@@ -743,7 +743,7 @@ def ensure_update(module, params):
                     filter_d['NAMES'] = attributes['new_name']
                 changed = True
 
-        if m_config["NAME"] == 'hscroot' and m_config["passwd"] != None and hmc_user == 'hscroot':
+        if m_config["NAME"] == 'hscroot' and m_config["passwd"] is not None and hmc_user == 'hscroot':
             password = m_config["passwd"]
             hmc_conn = HmcCliConnection(module, hmc_host, hmc_user, password)
             hmc = Hmc(hmc_conn)
