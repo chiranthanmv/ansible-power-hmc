@@ -697,6 +697,7 @@ def ensure_update(module, params):
     enable_user = params.get('enable_user')
     attributes = params.get('attributes')
     user_info = []
+    name = "hscroot"
     warning_msg = ""
 
     validate_parameters(params)
@@ -723,7 +724,7 @@ def ensure_update(module, params):
     if already_exist:
         m_config = {"NAME": usr_name}
         if attributes:
-            if m_config["NAME"] == 'hscroot':
+            if m_config["NAME"] == name:
                 for key in attributes.keys():
                     if key not in ['passwd', 'session_timeout', 'verify_timeout', 'idle_timeout']:
                         attributes[key] = None
@@ -743,7 +744,8 @@ def ensure_update(module, params):
                     filter_d['NAMES'] = attributes['new_name']
                 changed = True
 
-        if m_config["NAME"] == 'hscroot' and m_config["passwd"] is not None and hmc_user == 'hscroot':
+        # Re-initializing the HmcCliConnection in cases where hscroot password is not modified
+        if m_config["NAME"] == name and m_config["passwd"] is not None and hmc_user == name:
             password = m_config["passwd"]
             hmc_conn = HmcCliConnection(module, hmc_host, hmc_user, password)
             hmc = Hmc(hmc_conn)
