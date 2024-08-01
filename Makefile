@@ -105,4 +105,4 @@ unit-test: prep-collection
 
 .PHONY: ansible-lint
 ansible-lint: 
-	cd playbook && ansible-lint .
+	cd playbooks && ansible-lint .
