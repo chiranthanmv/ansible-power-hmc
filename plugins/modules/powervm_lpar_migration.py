@@ -99,24 +99,30 @@ options:
     shared_proc_pool:
         description:
             - list of the details of the shared processor pools to use on the destination managed system.
+            - this parameter support single and multiple pools.
+            - This option can be used only with C(migrate)
         type: list
         elements: dict
         suboptions:
             lpar_name:
                 description:
                     - Name of the partition to be migrated.
+                    - lpar_name and lpar_id are mutually exclusive.
                 type: str
             lpar_id:
                 description:
                     - Id of the partition to be migrated.
+                    - lpar_name and lpar_id are mutually exclusive.
                 type: int
             pool_id:
                 description:
                     - IDs of the shared processor pools to use on the destination managed.
+                    - pool_id and pool_name are mutually exclusive.
                 type: int
             pool_name:
                 description:
                     - Names of the shared processor pools to use on the destination managed.
+                    - pool_id and pool_name are mutually exclusive.
                 type: str
     action:
         description:
