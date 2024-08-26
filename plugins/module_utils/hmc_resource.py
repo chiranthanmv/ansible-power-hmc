@@ -716,3 +716,10 @@ class Hmc():
         lines = raw_result.split()
 
         return lines
+    
+    @staticmethod
+    def getSystemNameFromMTMS(module, hmc_host, hmc_user, password, system_name):
+        hmc_conn = HmcCliConnection(module, hmc_host, hmc_user, password)
+        hmc = Hmc(hmc_conn)
+        attr_dict = hmc.getManagedSystemDetails(system_name)
+        return attr_dict.get('name')
