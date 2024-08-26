@@ -349,7 +349,7 @@ class Hmc():
         logger.debug(chhwresCmd)
         self.hmcconn.execute(chhwresCmd)
 
-    def migratePartitions(self, opr, srcCEC, dstCEC=None, lparNames=None, lparIDs=None, aLL=False, ip=None, wait=None):
+    def migratePartitions(self, opr, srcCEC, dstCEC=None, lparNames=None, lparIDs=None, aLL=False, ip=None, wait=None, pool=None):
         opr = opr.upper()
         migrlparCmd = self.CMD['MIGRLPAR'] + \
             self.OPT['MIGRLPAR']['-O'][opr] +\
@@ -366,6 +366,17 @@ class Hmc():
             migrlparCmd += self.OPT['MIGRLPAR']['--IP'] + ip
         if wait:
             migrlparCmd += self.OPT['MIGRLPAR']['-W'] + str(wait)
+        if pool and opr == 'M':
+            if len(pool) == 1:
+                if pool.isdigit():
+                    migrlparCmd += " " + self.OPT['MIGRLPAR']['-I'] + '"shared_proc_pool_id=' + str(pool) + '"'
+                else:
+                    migrlparCmd += " " + self.OPT['MIGRLPAR']['-I'] + '"shared_proc_pool_name=' + str(pool) + '"'
+            else:
+                if '//' in str(pool):
+                    migrlparCmd += " " + self.OPT['MIGRLPAR']['-I'] + '\\' + '"multiple_shared_proc_pool_names=' + str(pool) + '\\' + '"'
+                elif '/' in str(pool):
+                    migrlparCmd += " " + self.OPT['MIGRLPAR']['-I'] + '\\' + '"multiple_shared_proc_pool_ids=' + str(pool) + '\\' + '"'
         self.hmcconn.execute(migrlparCmd)
 
     def _configMandatoryLparSettings(self, delta_config=None):
