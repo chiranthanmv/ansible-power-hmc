@@ -214,7 +214,6 @@ from ansible_collections.ibm.power_hmc.plugins.module_utils.hmc_exceptions impor
 from ansible_collections.ibm.power_hmc.plugins.module_utils.hmc_rest_client import parse_error_response
 from ansible_collections.ibm.power_hmc.plugins.module_utils.hmc_rest_client import HmcRestClient
 from ansible_collections.ibm.power_hmc.plugins.module_utils.hmc_exceptions import ParameterError
-from module_utils.hmc_resource import Hmc
 
 def init_logger():
     logging.basicConfig(
@@ -424,7 +423,6 @@ def fetchManagedSysDetails(module, params):
     system_uuid = None
     changed = False
     validate_parameters(params)
-        
     try:
         rest_conn = HmcRestClient(hmc_host, hmc_user, password)
     except Exception as error:
