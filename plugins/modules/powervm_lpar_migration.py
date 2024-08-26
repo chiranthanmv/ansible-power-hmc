@@ -96,28 +96,6 @@ options:
             - The maximum time, in minutes, to wait for operation to complete
             - This option can be used only with C(migrate) and C(validate) I(action)
         type: int
-    shared_proc_pool:
-        description:
-            - list of the details of the shared processor pools to use on the destination managed system.
-        type: list
-        elements: dict
-        suboptions:
-            lpar_name:
-                description:
-                    - Name of the partition to be migrated.
-                type: str
-            lpar_id:
-                description:
-                    - Id of the partition to be migrated.
-                type: int
-            pool_id:
-                description:
-                    - IDs of the shared processor pools to use on the destination managed.
-                type: int
-            pool_name:
-                description:
-                    - Names of the shared processor pools to use on the destination managed.
-                type: str
     action:
         description:
             - C(validate) validate a specified partition/s.
@@ -186,7 +164,7 @@ system_info:
 '''
 
 import logging
-LOG_FILENAME = "/tmp/ansible_power_hmc_pool.log"
+LOG_FILENAME = "/tmp/ansible_power_hmc.log"
 logger = logging.getLogger(__name__)
 from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.ibm.power_hmc.plugins.module_utils.hmc_cli_client import HmcCliConnection
@@ -210,33 +188,16 @@ def validate_parameters(params):
 
     if opr == 'recover':
         mandatoryList = ['hmc_host', 'hmc_auth', 'src_system']
-        unsupportedList = ['dest_system', 'all_vms', 'wait', 'remote_ip', 'shared_proc_pool']
+        unsupportedList = ['dest_system', 'all_vms', 'wait', 'remote_ip']
     elif opr == 'validate':
         mandatoryList = ['hmc_host', 'hmc_auth', 'src_system', 'dest_system']
-        unsupportedList = ['all_vms', 'shared_proc_pool']
+        unsupportedList = ['all_vms']
     elif opr == 'authenticate':
         mandatoryList = ['hmc_host', 'hmc_auth', 'remote_ip', 'remote_username', 'remote_passwd']
-        unsupportedList = ['all_vms', 'src_system', 'dest_system', 'vm_names', 'vm_ids', 'wait', 'shared_proc_pool']
+        unsupportedList = ['all_vms', 'src_system', 'dest_system', 'vm_names', 'vm_ids', 'wait']
     elif opr == 'migrate':
         mandatoryList = ['hmc_host', 'hmc_auth', 'src_system', 'dest_system']
         unsupportedList = []
-
-    if params['action'] == 'migrate':
-        if params['vm_ids'] is not None and params['vm_names'] is not None:
-            raise ParameterError("vm_names and vm_ids are mutually exclusive")
-        if params['shared_proc_pool'] is not None:
-            unsupportedList += ['all_vms']
-            for item in params['shared_proc_pool']:
-                if params['vm_names'] is not None:
-                    if len(params['shared_proc_pool']) != len(params['vm_names']):
-                        raise ParameterError("Specify the pool details for each VMs provided")
-                    if item['pool_name'] is None or item['lpar_name'] is None:
-                        raise ParameterError("pool_name and lpar_name are mandatory for migration with partition name.")
-                elif params['vm_ids'] is not None:
-                    if len(params['shared_proc_pool']) != len(params['vm_ids']):
-                        raise ParameterError("Specify the pool details for each VMs provided")
-                    if item['pool_id'] is None or item['lpar_id'] is None:
-                        raise ParameterError("pool_id and lpar_id are mandatory for migration with partition id.")
 
     collate = []
     for eachMandatory in mandatoryList:
@@ -271,43 +232,24 @@ def logical_partition_migration(module, params):
     all_vms = params['all_vms']
     remote_ip = params['remote_ip']
     wait = params['wait']
-    shared_pool = params['shared_proc_pool']
     operation = params['action']
     validate_parameters(params)
     changed = False
 
     hmc_conn = HmcCliConnection(module, hmc_host, hmc_user, password)
     hmc = Hmc(hmc_conn)
-    shared_pool_details = ""
-    if shared_pool is not None:
-        if len(shared_pool) == 1:
-            for item in shared_pool:
-                if item['pool_name'] is not None:
-                    shared_pool_details += item['pool_name']
-                elif item['pool_id'] is not None:
-                    shared_pool_details += str(item['pool_id'])
-        else:
-            for item in shared_pool:
-                if item['lpar_name'] is not None:
-                    shared_pool_details += item['lpar_name'] + "//" + str(item['pool_name'])
-                elif item['lpar_id'] is not None:
-                    shared_pool_details += "/" + str(item['lpar_id']) + "/" + str(item['pool_id'])
-                shared_pool_details += ","
-            shared_pool_details = shared_pool_details[:-1]
 
     try:
         if vm_names:
             if operation == 'recover' and len(vm_names) > 1:
                 module.fail_json(msg="Please provide only one partition name for recover operation")
-            hmc.migratePartitions(operation[0], src_system, dest_system, lparNames=",".join(vm_names), lparIDs=None, aLL=False, ip=remote_ip,
-                                  wait=wait, pool=shared_pool_details)
+            hmc.migratePartitions(operation[0], src_system, dest_system, lparNames=",".join(vm_names), lparIDs=None, aLL=False, ip=remote_ip, wait=wait)
         elif vm_ids:
             if operation == 'recover' and len(vm_ids) > 1:
                 module.fail_json(msg="Please provide only one partition id for recover operation")
-            hmc.migratePartitions(operation[0], src_system, dest_system, lparNames=None, lparIDs=",".join(vm_ids), aLL=False, ip=remote_ip,
-                                  wait=wait, pool=shared_pool_details)
+            hmc.migratePartitions(operation[0], src_system, dest_system, lparNames=None, lparIDs=",".join(vm_ids), aLL=False, ip=remote_ip, wait=wait)
         elif all_vms:
-            hmc.migratePartitions(operation[0], src_system, dest_system, lparNames=None, lparIDs=None, aLL=True, ip=remote_ip, wait=wait, pool=None)
+            hmc.migratePartitions(operation[0], src_system, dest_system, lparNames=None, lparIDs=None, aLL=True, ip=remote_ip, wait=wait)
         else:
             module.fail_json(msg="Please provide one of the lpar details vm_names, vm_ids, all_vms")
         if operation != 'validate':
@@ -387,14 +329,6 @@ def run_module():
         remote_passwd=dict(type='str', no_log=True),
         wait=dict(type='int'),
         action=dict(type='str', choices=['validate', 'migrate', 'recover', 'authenticate'], required=True),
-        shared_proc_pool=dict(type='list', elements='dict',
-                              options=dict(
-                                  lpar_name=dict(type='str'),
-                                  lpar_id=dict(type='int'),
-                                  pool_id=dict(type='int'),
-                                  pool_name=dict(type='str'),
-                              )
-                              )
     )
 
     module = AnsibleModule(
