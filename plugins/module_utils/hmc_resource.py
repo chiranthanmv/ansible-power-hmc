@@ -8,11 +8,11 @@ __metaclass__ = type
 import time
 import re
 import subprocess
+import multiprocessing
 from ansible_collections.ibm.power_hmc.plugins.module_utils.hmc_command_stack import HmcCommandStack
 from ansible_collections.ibm.power_hmc.plugins.module_utils.hmc_cli_client import HmcCliConnection
 from ansible_collections.ibm.power_hmc.plugins.module_utils.hmc_exceptions import HmcError
 from ansible_collections.ibm.power_hmc.plugins.module_utils.hmc_exceptions import ParameterError
-
 import logging
 logger = logging.getLogger(__name__)
 
@@ -349,7 +349,7 @@ class Hmc():
         logger.debug(chhwresCmd)
         self.hmcconn.execute(chhwresCmd)
 
-    def migratePartitions(self, opr, srcCEC, dstCEC=None, lparNames=None, lparIDs=None, aLL=False, ip=None, wait=None):
+    def migratePartitions(self, opr, srcCEC, dstCEC=None, lparNames=None, lparIDs=None, aLL=False, ip=None, wait=None, pool=None):
         opr = opr.upper()
         migrlparCmd = self.CMD['MIGRLPAR'] + \
             self.OPT['MIGRLPAR']['-O'][opr] +\
@@ -366,6 +366,17 @@ class Hmc():
             migrlparCmd += self.OPT['MIGRLPAR']['--IP'] + ip
         if wait:
             migrlparCmd += self.OPT['MIGRLPAR']['-W'] + str(wait)
+        if pool and opr == 'M':
+            if len(pool) == 1:
+                if pool.isdigit():
+                    migrlparCmd += " " + self.OPT['MIGRLPAR']['-I'] + '"shared_proc_pool_id=' + str(pool) + '"'
+                else:
+                    migrlparCmd += " " + self.OPT['MIGRLPAR']['-I'] + '"shared_proc_pool_name=' + str(pool) + '"'
+            else:
+                if '//' in str(pool):
+                    migrlparCmd += " " + self.OPT['MIGRLPAR']['-I'] + '\\' + '"multiple_shared_proc_pool_names=' + str(pool) + '\\' + '"'
+                elif '/' in str(pool):
+                    migrlparCmd += " " + self.OPT['MIGRLPAR']['-I'] + '\\' + '"multiple_shared_proc_pool_ids=' + str(pool) + '\\' + '"'
         self.hmcconn.execute(migrlparCmd)
 
     def _configMandatoryLparSettings(self, delta_config=None):
@@ -482,20 +493,52 @@ class Hmc():
         result = self.hmcconn.execute(lpar_netboot)
         return self._parseIODetailsFromNetboot(result)
 
-    def installOSFromNIM(self, loc_code, nimIP, gateway, lparIP, vlanID, vlanPrio, submask, viosName, profName, systemName):
-        lpar_netboot = self.CMD['LPAR_NETBOOT'] +\
-            self.OPT['LPAR_NETBOOT']['-F'] +\
+    def installOSFromNIM(self, loc_code, nimIP, gateway, lparIP, vlanID, vlanPrio, submask, viosName, profName, systemName, lparMac=None):
+        if loc_code:
+            os_command = self.OPT['LPAR_NETBOOT']['-L'] + loc_code +\
+                self.OPT['LPAR_NETBOOT']['-V'] + vlanID +\
+                self.OPT['LPAR_NETBOOT']['-Y'] + vlanPrio
+        elif lparMac:
+            os_command = self.OPT['LPAR_NETBOOT']['-x'] +\
+                self.OPT['LPAR_NETBOOT']['-v'] +\
+                self.OPT['LPAR_NETBOOT']['-i'] +\
+                self.OPT['LPAR_NETBOOT']['-s'] + "auto" +\
+                self.OPT['LPAR_NETBOOT']['-d'] + "auto" +\
+                self.OPT['LPAR_NETBOOT']['-m'] + lparMac
+        else:
+            pass
+
+        lpar_netboot = self.CMD['LPAR_NETBOOT'] + self.OPT['LPAR_NETBOOT']['-F'] +\
             self.OPT['LPAR_NETBOOT']['-D'] +\
             self.OPT['LPAR_NETBOOT']['-T'] + "ent" +\
-            self.OPT['LPAR_NETBOOT']['-L'] + loc_code +\
             self.OPT['LPAR_NETBOOT']['-S'] + nimIP +\
             self.OPT['LPAR_NETBOOT']['-G'] + gateway +\
             self.OPT['LPAR_NETBOOT']['-C'] + lparIP +\
-            self.OPT['LPAR_NETBOOT']['-V'] + vlanID +\
-            self.OPT['LPAR_NETBOOT']['-Y'] + vlanPrio +\
             self.OPT['LPAR_NETBOOT']['-K'] + submask +\
+            os_command +\
             " " + viosName + " " + profName + " " + systemName
         self.hmcconn.execute(lpar_netboot)
+
+    def getconsolelog(self, module, lpar_hmc, userid, hmc_password, systemName, lparName):
+        conn = HmcCliConnection(module, lpar_hmc, userid, hmc_password)
+        cmd = 'rmvterm -m ' + systemName + ' -p ' + lparName
+        conn.execute(cmd)
+        cmd = 'mkvterm -m ' + systemName + ' -p ' + lparName
+        stdout = conn.execute(cmd)
+        try:
+            for line in stdout:
+                logger.debug(line.strip())
+                logger.debug("\n")
+        except UnicodeDecodeError:
+            pass
+
+    def checkconsolelog(self, module, lpar_ip, lpar_hmc, userid, hmc_password, systemName, lparName):
+        logger.info("Installation will take approximatly 10-12 mins to complete.")
+        process = multiprocessing.Process(target=self.getconsolelog, args=(module, lpar_hmc, userid, hmc_password, systemName, lparName))
+        process.start()
+        time.sleep(360)
+        process.terminate()
+        process.join()
 
     def getPartitionRefcode(self, system_name, name):
         filter_config = dict(LPAR_NAMES=name)
@@ -564,6 +607,80 @@ class Hmc():
         elif rm_type:
             rmhmcusrCmd += self.OPT['RMHMCUSR']['-T'][rm_type.upper()]
         self.hmcconn.execute(rmhmcusrCmd)
+
+    def listViosbk(self, filt=None):
+        listViosBk = self.CMD['LSVIOSBK']
+        if filt:
+            listViosBk += self.cmdClass.filterBuilder('LSVIOSBK', filt)
+        result = self.hmcconn.execute(listViosBk)
+        if 'No results were found' in result:
+            return []
+        return self.cmdClass.parseMultiLineCSV(result)
+
+    def createViosBk(self, configDict=None, enable=False, modify_type=None):
+        optional = ['nimol_resource', 'media_repository', 'volume_group_structure']
+        opt = []
+        output = ""
+        for each in optional:
+            if configDict.get(each) is not None:
+                opt.append(f"{each}={configDict[each]}")
+        output = ','.join(opt)
+        viosbk_cmd = self.CMD['MKVIOSBK'] + \
+            self.OPT['MKVIOSBK']['-T'] + configDict['types'] + \
+            self.OPT['MKVIOSBK']['-M'] + configDict['system'] + \
+            self.OPT['MKVIOSBK']['-F'] + configDict['backup_name'] + " "
+        if configDict['vios_name'] is not None:
+            viosbk_cmd += self.OPT['MKVIOSBK']['-P'] + configDict['vios_name'] + " "
+        elif configDict['vios_id'] is not None:
+            viosbk_cmd += self.OPT['MKVIOSBK']['--ID'] + configDict['vios_id'] + " "
+        elif configDict['vios_uuid'] is not None:
+            viosbk_cmd += self.OPT['MKVIOSBK']['--UUID'] + configDict['vios_uuid'] + " "
+        if output != "":
+            viosbk_cmd += self.OPT['MKVIOSBK']['-A'] + '"' + output + '"'
+        return self.hmcconn.execute(viosbk_cmd)
+
+    def restoreViosBk(self, configDict=None, enable=False, modify_type=None):
+        restore_cmd = self.CMD['RSTVIOSBK'] + \
+            self.OPT['RSTVIOSBK']['-T'] + configDict['types'] + \
+            self.OPT['RSTVIOSBK']['-M'] + configDict['system'] + \
+            self.OPT['RSTVIOSBK']['-F'] + configDict['backup_name'] + " "
+        if configDict['vios_name'] is not None:
+            restore_cmd += self.OPT['RSTVIOSBK']['-P'] + configDict['vios_name'] + " "
+        elif configDict['vios_id'] is not None:
+            restore_cmd += self.OPT['RSTVIOSBK']['--ID'] + configDict['vios_id'] + " "
+        elif configDict['vios_uuid'] is not None:
+            restore_cmd += self.OPT['RSTVIOSBK']['--UUID'] + configDict['vios_uuid'] + " "
+        if configDict['restart'] is not None:
+            restore_cmd += self.OPT['RSTVIOSBK']['-R']
+        self.hmcconn.execute(restore_cmd)
+
+    def removeViosBk(self, configDict=None, enable=False, modify_type=None):
+        rmviosbk_cmd = self.CMD['RMVIOSBK'] + \
+            self.OPT['RMVIOSBK']['-T'] + configDict['types'] + \
+            self.OPT['RMVIOSBK']['-M'] + configDict['system'] + \
+            self.OPT['RMVIOSBK']['-F'] + configDict['backup_name'] + " "
+        if configDict['vios_name'] is not None:
+            rmviosbk_cmd += self.OPT['MKVIOSBK']['-P'] + configDict['vios_name']
+        elif configDict['vios_id'] is not None:
+            rmviosbk_cmd += self.OPT['MKVIOSBK']['--ID'] + configDict['vios_id']
+        elif configDict['vios_uuid'] is not None:
+            rmviosbk_cmd += self.OPT['MKVIOSBK']['--UUID'] + configDict['vios_uuid']
+        return self.hmcconn.execute(rmviosbk_cmd)
+
+    def modifyViosBk(self, configDict=None, enable=False, modify_type=None):
+        modviosbk_cmd = self.CMD['CHVIOSBK'] + \
+            self.OPT['CHVIOSBK']['-T'] + configDict['types'] + \
+            self.OPT['CHVIOSBK']['-M'] + configDict['system'] + \
+            self.OPT['CHVIOSBK']['-F'] + configDict['backup_name'] + " "
+        modviosbk_cmd += self.OPT['CHVIOSBK']['-O'] + "s "
+        if configDict['vios_name'] is not None:
+            modviosbk_cmd += self.OPT['CHVIOSBK']['-P'] + configDict['vios_name']
+        elif configDict['vios_id'] is not None:
+            modviosbk_cmd += self.OPT['CHVIOSBK']['--ID'] + configDict['vios_id']
+        elif configDict['vios_uuid'] is not None:
+            modviosbk_cmd += self.OPT['CHVIOSBK']['--UUID'] + configDict['vios_uuid']
+        modviosbk_cmd += " " + self.OPT['CHVIOSBK']['-A'] + "'new_name=" + configDict['new_name'] + "'"
+        return self.hmcconn.execute(modviosbk_cmd)
 
     def checkForOSToBootUpFully(self, system_name, name, timeoutInMin=60):
         POLL_INTERVAL_IN_SEC = 30
@@ -666,6 +783,7 @@ class Hmc():
             lssyscfgCmd += self.OPT['LSSYSCFG']['-F'] + filter
 
         raw_result = self.hmcconn.execute(lssyscfgCmd)
+        raw_result = raw_result.replace("Power Off", "Off")
         lines = raw_result.split()
 
         return lines
@@ -679,6 +797,7 @@ class Hmc():
             lssyscfgCmd += self.OPT['LSSYSCFG']['-F'] + filter
 
         raw_result = self.hmcconn.execute(lssyscfgCmd)
+        raw_result = raw_result.replace("Power Off", "Off")
         lines = raw_result.split()
 
         return lines

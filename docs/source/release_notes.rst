@@ -242,3 +242,25 @@ Notes
 
 .. _GitHub v1.9.0:
    https://github.com/IBM/ansible-power-hmc/releases/download/v1.9.0/ibm-power_hmc-1.9.0.tar.gz
+
+Version 1.10.0
+-------------
+Notes
+  * vios_maintenance: Support for VIOS backup and restore
+  * powervm_lpar_migration: Support for shared proc pool ID (Issue: #115 )
+  * hmc_update_upgrade: Support for hmc update from disk with filename (Issue: #124)
+  * powervm_lpar_instance: Fix for get managed system name by lpar when there are powered off systems (Issue: #125)
+  * powervm_lpar_instance: Improve idempotency (Issue: #128)
+  * hmc_pwdpolicy: Fix for password policy config not working for hscroot user
+  * hmc_user: Fix for list user is not showing the details of logged in user
+  * powervm_lpar_instance: Support for VMMac parameter in Linux OS installation
+
+  Availability
+    * `Galaxy v1.10.0`_
+    * `GitHub v1.10.0`_
+
+.. _Galaxy v1.10.0:
+   https://galaxy.ansible.com/download/ibm-power_hmc-1.10.0.tar.gz
+
+.. _GitHub v1.10.0:
+   https://github.com/IBM/ansible-power-hmc/releases/download/v1.10.0/ibm-power_hmc-1.10.0.tar.gz
