@@ -219,6 +219,8 @@ from ansible_collections.ibm.power_hmc.plugins.module_utils.hmc_exceptions impor
 from ansible_collections.ibm.power_hmc.plugins.module_utils.hmc_exceptions import ParameterError
 from ansible_collections.ibm.power_hmc.plugins.module_utils.hmc_rest_client import parse_error_response
 from ansible_collections.ibm.power_hmc.plugins.module_utils.hmc_rest_client import HmcRestClient
+from ansible_collections.ibm.power_hmc.plugins.module_utils.hmc_constants import HmcConstants
+import re
 import sys
 import json
 
@@ -286,6 +288,16 @@ def fetchViosInfo(module, params):
     free_pvs = params['free_pvs']
     validate_parameters(params)
     lpar_config = {}
+    changed = False
+
+    hmc_conn = HmcCliConnection(module, hmc_host, hmc_user, password)
+    hmc = Hmc(hmc_conn)
+
+    if re.match(HmcConstants.MTMS_pattern, system_name):
+        try:
+            system_name = hmc.getSystemNameFromMTMS(system_name)
+        except HmcError as on_system_error:
+            return changed, repr(on_system_error), None
 
     try:
         rest_conn = HmcRestClient(hmc_host, hmc_user, password)

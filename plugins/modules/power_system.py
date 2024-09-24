@@ -207,6 +207,7 @@ LOG_FILENAME = "/tmp/ansible_power_hmc.log"
 logger = logging.getLogger(__name__)
 import sys
 import json
+import re
 from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.ibm.power_hmc.plugins.module_utils.hmc_cli_client import HmcCliConnection
 from ansible_collections.ibm.power_hmc.plugins.module_utils.hmc_resource import Hmc
@@ -214,6 +215,8 @@ from ansible_collections.ibm.power_hmc.plugins.module_utils.hmc_exceptions impor
 from ansible_collections.ibm.power_hmc.plugins.module_utils.hmc_rest_client import parse_error_response
 from ansible_collections.ibm.power_hmc.plugins.module_utils.hmc_rest_client import HmcRestClient
 from ansible_collections.ibm.power_hmc.plugins.module_utils.hmc_exceptions import ParameterError
+from ansible_collections.ibm.power_hmc.plugins.module_utils.hmc_constants import HmcConstants
+
 
 def init_logger():
     logging.basicConfig(
@@ -291,12 +294,6 @@ def powerOnManagedSys(module, params):
     hmc_conn = HmcCliConnection(module, hmc_host, hmc_user, password)
     hmc = Hmc(hmc_conn)
 
-    if '*' in system_name:
-        try:
-            system_name = Hmc.getSystemNameFromMTMS(module, hmc_host, hmc_user, password, system_name)
-        except HmcError as on_system_error:
-            return changed, repr(on_system_error), None
-
     try:
         res = hmc.getManagedSystemDetails(system_name)
         system_state = res.get('state')
@@ -325,12 +322,6 @@ def powerOffManagedSys(module, params):
     hmc_conn = HmcCliConnection(module, hmc_host, hmc_user, password)
     hmc = Hmc(hmc_conn)
 
-    if '*' in system_name:
-        try:
-            system_name = Hmc.getSystemNameFromMTMS(module, hmc_host, hmc_user, password, system_name)
-        except HmcError as on_system_error:
-            return changed, repr(on_system_error), None
-        
     try:
         res = hmc.getManagedSystemDetails(system_name)
         system_state = res.get('state')
@@ -362,12 +353,6 @@ def modifySystemConfiguration(module, params):
     hmc_conn = HmcCliConnection(module, hmc_host, hmc_user, password)
     hmc = Hmc(hmc_conn)
 
-    if '*' in system_name:
-        try:
-            system_name = Hmc.getSystemNameFromMTMS(module, hmc_host, hmc_user, password, system_name)
-        except HmcError as on_system_error:
-            return changed, repr(on_system_error), None
-
     try:
         attr_dict = hmc.getManagedSystemDetails(system_name)
         attr_dict['new_name'] = attr_dict.pop('name')
@@ -394,12 +379,6 @@ def modifySystemHardwareResources(module, params):
     hmc_conn = HmcCliConnection(module, hmc_host, hmc_user, password)
     hmc = Hmc(hmc_conn)
 
-    if '*' in system_name:
-        try:
-            system_name = Hmc.getSystemNameFromMTMS(module, hmc_host, hmc_user, password, system_name)
-        except HmcError as on_system_error:
-            return changed, repr(on_system_error), None
-
     try:
         attr_dict = hmc.getManagedSystemHwres(system_name, 'mem', 'sys')
         if 'curr_mem_mirroring_mode' in attr_dict.keys():
@@ -423,17 +402,21 @@ def fetchManagedSysDetails(module, params):
     system_uuid = None
     changed = False
     validate_parameters(params)
+
+    hmc_conn = HmcCliConnection(module, hmc_host, hmc_user, password)
+    hmc = Hmc(hmc_conn)
+
+    if re.match(HmcConstants.MTMS_pattern, system_name):
+        try:
+            system_name = hmc.getSystemNameFromMTMS(system_name)
+        except HmcError as on_system_error:
+            return changed, repr(on_system_error), None
+
     try:
         rest_conn = HmcRestClient(hmc_host, hmc_user, password)
     except Exception as error:
         error_msg = parse_error_response(error)
         module.fail_json(msg=error_msg)
-
-    if '*' in system_name:
-        try:
-            system_name = Hmc.getSystemNameFromMTMS(module, hmc_host, hmc_user, password, system_name)
-        except HmcError as on_system_error:
-            return changed, repr(on_system_error), None
 
     try:
         system_uuid, server_dom = rest_conn.getManagedSystem(system_name)
@@ -470,17 +453,21 @@ def updatePCM(module, params):
     changed = False
     warning = None
     validate_parameters(params)
+
+    hmc_conn = HmcCliConnection(module, hmc_host, hmc_user, password)
+    hmc = Hmc(hmc_conn)
+
+    if re.match(HmcConstants.MTMS_pattern, system_name):
+        try:
+            system_name = hmc.getSystemNameFromMTMS(system_name)
+        except HmcError as on_system_error:
+            return changed, repr(on_system_error), None
+
     try:
         rest_conn = HmcRestClient(hmc_host, hmc_user, password)
     except Exception as error:
         error_msg = parse_error_response(error)
         module.fail_json(msg=error_msg)
-
-    if '*' in system_name:
-        try:
-            system_name = Hmc.getSystemNameFromMTMS(module, hmc_host, hmc_user, password, system_name)
-        except HmcError as on_system_error:
-            return changed, repr(on_system_error), None
 
     try:
         system_uuid, server_dom = rest_conn.getManagedSystem(system_name)
