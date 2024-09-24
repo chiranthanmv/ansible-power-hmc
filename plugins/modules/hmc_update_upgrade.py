@@ -70,7 +70,7 @@ options:
                       C(ibmwebsite) for update through IBM fixcentral website.
                     - When the location type is set to C(disk), first it looks for the C(build_file) in HMC hard disk
                       if it doesn't exist then it looks for C(build_file) in the Ansible Controller node.
-                    - ibmwebsite location type supports only update operation and HMC1030 releas onwards
+                    - ibmwebsite location type supports only update operation and V10 R2 M1030 release onwards
                 type: str
                 required: true
                 choices: ['disk', 'ftp', 'sftp', 'nfs', 'ibmwebsite']
@@ -119,7 +119,7 @@ options:
                     - The name of the PTF to install.
                       This option is required when the ISO image is located on the IBM Fix Central website. Otherwise, this option is not valid.
                       This option is required only when the location_type is 'ibmwebsite'.
-                      This option is available for HMC versions from 1030 onwards.
+                      This option is available for HMC versions from V10 R2 M1030 onwards.
                 type: str
     state:
         description:
@@ -132,7 +132,7 @@ options:
     action:
         description:
             - C(listptf) lists available Hardware Management Console (HMC) updates from the IBM Fix Central website.
-            - This option is available for HMC versions from 1030 onwards
+            - This option is available for HMC versions from V10 R2 M1030 onwards
         type: str
         choices: ['listptf']
 '''
@@ -422,7 +422,7 @@ def list_ptf(module, params):
     initial_version_details = hmc.listHMCVersion()
 
     if int(initial_version_details["SERVICEPACK"]) < 1030:
-        raise VersionError("List ptf is supported from 1030 version onwards.")
+        raise VersionError("List ptf is supported from V10 R2 M1030 version onwards.")
     else:
         ptf_details = hmc.listHMCPTF('ibmwebsite')
 
@@ -599,7 +599,7 @@ def update_hmc(module, params):
         if int(initial_version_details["SERVICEPACK"]) >= 1030:
             otherConfig['--PTF'] = params['build_config']['ptf']
         else:
-            raise VersionError("Update through ibmwebsite supported from 1030 version onwards.")
+            raise VersionError("Update through ibmwebsite supported from V10 R2 M1030 version onwards.")
 
     # this option to restart hmc after configuration
     otherConfig['-R'] = " "
