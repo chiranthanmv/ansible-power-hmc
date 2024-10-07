@@ -513,6 +513,60 @@ def viosLicenseAccept(module, params):
 
     return changed, None, None
 
+def list_all_vios_image(module, params):
+    hmc_host = params['hmc_host']
+    hmc_user = params['hmc_auth']['username']
+    password = params['hmc_auth']['password']
+    changed = False
+    hmc_conn = HmcCliConnection(module, hmc_host, hmc_user, password)
+    hmc = Hmc(hmc_conn)
+
+    try:
+        vios_image_details = hmc.listViosImages()
+        changed = False
+        return changed, vios_image_details, None
+    except Exception as e:
+        module.fail_json(msg=str(e))
+
+def copy_vios_image_via_sftp(module, params):
+    hmc_host = params['hmc_host']
+    hmc_user = params['hmc_auth']['username']
+    password = params['hmc_auth']['password']
+    sftp_server = params['sftp_server']
+    sftp_user = params['sftp_auth']['username']
+    sftp_password = params['sftp_auth']['password']
+    image_name = params['image_name']
+
+    hmc_conn = HmcCliConnection(module, hmc_host, hmc_user, password)
+    hmc = Hmc(hmc_conn)
+
+    try:
+        image = hmc.listViosImages(image_name=image_name)
+        if image:
+            module.exit_json(changed=False, msg=f"The VIOS image with name '{image_name}' already exists.")
+        else:
+            hmc.copyViosImage(sftp_server, sftp_user, sftp_password, image_name)
+            image = hmc.listViosImages(image_name=image_name)
+            if image:
+                module.exit_json(changed=True, msg=f"The VIOS image with name '{image_name}' has been copied successfully.")
+    except Exception as e:
+        module.fail_json(msg=str(e))
+
+def delete_vios_image(module, params):
+    hmc_host = params['hmc_host']
+    hmc_user = params['hmc_auth']['username']
+    password = params['hmc_auth']['password']
+    image_name = params['image_name']
+
+    hmc_conn = HmcCliConnection(module, hmc_host, hmc_user, password)
+    hmc = Hmc(hmc_conn)
+
+    try:
+        hmc.deleteViosImage(image_name)
+    except Exception as e:
+        module.fail_json(msg=str(e))
+
+    return True, None, None
 
 def perform_task(module):
     params = module.params
@@ -520,7 +574,10 @@ def perform_task(module):
         "facts": fetchViosInfo,
         "present": createVios,
         "install": installVios,
-        "accept_license": viosLicenseAccept
+        "accept_license": viosLicenseAccept,
+        "listimages": list_all_vios_image,
+        "copy": copy_vios_image_via_sftp,
+        "delete": delete_vios_image
     }
     oper = 'action'
     if params['action'] is None:
@@ -544,8 +601,17 @@ def run_module():
                           password=dict(type='str', no_log=True),
                       )
                       ),
-        system_name=dict(type='str', required=True),
-        name=dict(type='str', required=True),
+        sftp_auth=dict(type='dict',
+                       no_log=True,
+                       options=dict(
+                          username=dict(type='str'),
+                          password=dict(type='str', no_log=True),
+                      )
+                      ),
+        sftp_server = dict(type='str'),
+        image_name = dict(type='str'),
+        system_name=dict(type='str'),
+        name=dict(type='str'),
         settings=dict(type='dict'),
         nim_IP=dict(type='str'),
         nim_gateway=dict(type='str'),
@@ -558,8 +624,8 @@ def run_module():
         timeout=dict(type='int'),
         virtual_optical_media=dict(type='bool'),
         free_pvs=dict(type='bool'),
-        state=dict(type='str', choices=['facts', 'present']),
-        action=dict(type='str', choices=['install', 'accept_license']),
+        state=dict(type='str', choices=['facts', 'present', 'listimages']),
+        action=dict(type='str', choices=['install', 'accept_license', 'copy', 'delete']),
     )
 
     module = AnsibleModule(
@@ -568,8 +634,11 @@ def run_module():
         required_one_of=[('state', 'action')],
         required_if=[['state', 'facts', ['hmc_host', 'hmc_auth', 'system_name', 'name']],
                      ['state', 'present', ['hmc_host', 'hmc_auth', 'system_name', 'name']],
+                     ['state', 'listimages', ['hmc_host', 'hmc_auth']],
                      ['action', 'install', ['hmc_host', 'hmc_auth', 'system_name', 'name', 'nim_IP', 'nim_gateway', 'vios_IP', 'nim_subnetmask']],
                      ['action', 'accept_license', ['hmc_host', 'hmc_auth', 'system_name', 'name']],
+                     ['action', 'copy', ['hmc_host', 'hmc_auth', 'sftp_auth', 'sftp_server', 'image_name']],
+                     ['action', 'delete', ['hmc_host', 'hmc_auth', 'image_name' ]],
                      ],
     )
 

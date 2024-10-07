@@ -805,3 +805,31 @@ class Hmc():
     def getSystemNameFromMTMS(self, system_name):
         attr_dict = self.getManagedSystemDetails(system_name)
         return attr_dict.get('name')
+
+    def copyViosImage(self, sftp_server, sftp_user, sftp_password, image_name):
+        cpviosimgCmd = self.CMD['CPVIOSIMG'] +\
+            self.OPT['CPVIOSIMG']['-R']['SFTP'] +\
+            self.OPT['CPVIOSIMG']['-N'] + image_name +\
+            self.OPT['CPVIOSIMG']['-H'] + sftp_server +\
+            self.OPT['CPVIOSIMG']['-U'] + sftp_user +\
+            self.OPT['CPVIOSIMG']['-F'] + 'flash.iso' +\
+            self.OPT['CPVIOSIMG']['--PASSWD'] + sftp_password
+
+        self.hmcconn.execute(cpviosimgCmd)
+
+    def listViosImages(self, image_name=None):
+        if image_name:
+            lsviosimgCmd = self.CMD['LSVIOSIMG'] +\
+                '| grep -w ' +  image_name +\
+                ' || echo No results were found'
+        else:
+            lsviosimgCmd = self.CMD['LSVIOSIMG']
+        output = self.hmcconn.execute(lsviosimgCmd)
+        if 'No results were found' in output:
+            return []
+        return self.cmdClass.parseMultiLineCSV(output)
+
+    def deleteViosImage(self, image_name):
+        rmviosimgCmd = self.CMD['RMVIOSIMG'] +\
+            self.OPT['RMVIOSIMG']['-N'] + image_name
+        self.hmcconn.execute(rmviosimgCmd)
