@@ -806,14 +806,42 @@ class Hmc():
         attr_dict = self.getManagedSystemDetails(system_name)
         return attr_dict.get('name')
 
-    def copyViosImage(self, sftp_server, sftp_user, sftp_password, image_name):
-        cpviosimgCmd = self.CMD['CPVIOSIMG'] +\
-            self.OPT['CPVIOSIMG']['-R']['SFTP'] +\
-            self.OPT['CPVIOSIMG']['-N'] + image_name +\
-            self.OPT['CPVIOSIMG']['-H'] + sftp_server +\
-            self.OPT['CPVIOSIMG']['-U'] + sftp_user +\
-            self.OPT['CPVIOSIMG']['-F'] + 'flash.iso' +\
-            self.OPT['CPVIOSIMG']['--PASSWD'] + sftp_password
+    def copyViosImage(self, params):
+        media = params['media'].lower()
+        mount_location = params['mount_location']
+        server = params['server']
+        image_name = params['image_name']
+        files = params['files']
+        remote_directory = params['remote_directory']
+        options = params['options']
+        ssh_key_file = params['ssh_key_file']
+
+        if media == 'sftp':
+            sftp_user = params['sftp_auth']['username']
+            sftp_password = params['sftp_auth']['password']
+            cpviosimgCmd = self.CMD['CPVIOSIMG'] +\
+                self.OPT['CPVIOSIMG']['-R']['SFTP'] +\
+                self.OPT['CPVIOSIMG']['-N'] + image_name +\
+                self.OPT['CPVIOSIMG']['-H'] + server +\
+                self.OPT['CPVIOSIMG']['-U'] + sftp_user +\
+                self.OPT['CPVIOSIMG']['-F'] + files
+            if remote_directory:
+                cpviosimgCmd += self.OPT['CPVIOSIMG']['-d'] + remote_directory
+            if sftp_password:
+                cpviosimgCmd += self.OPT['CPVIOSIMG']['--PASSWD'] + sftp_password
+            elif ssh_key_file:
+                cpviosimgCmd += self.OPT['CPVIOSIMG']['-K'] + ssh_key_file
+        elif media == 'nfs':
+            cpviosimgCmd = self.CMD['CPVIOSIMG'] +\
+                self.OPT['CPVIOSIMG']['-R']['NFS'] +\
+                self.OPT['CPVIOSIMG']['-N'] + image_name +\
+                self.OPT['CPVIOSIMG']['-H'] + server +\
+                self.OPT['CPVIOSIMG']['-L'] + mount_location +\
+                self.OPT['CPVIOSIMG']['-F'] + files
+            if remote_directory:
+                cpviosimgCmd += self.OPT['CPVIOSIMG']['-d'] + remote_directory
+            if options:
+                cpviosimgCmd += self.OPT['CPVIOSIMG']['--OPTIONS'] + options
 
         self.hmcconn.execute(cpviosimgCmd)
 

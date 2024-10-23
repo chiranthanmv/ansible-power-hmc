@@ -454,7 +454,8 @@ class HmcCommandStack():
                    'RSTVIOSBK': {'-T': ' -t ', '-M': ' -m ', '-P': ' -p ', '-F': ' -f ', '--ID': '--id ', '--UUID': '--uuid ', '-R': '-r '},
                    'RMVIOSBK': {'-T': ' -t ', '-M': ' -m ', '-P': ' -p ', '-F': ' -f ', '--ID': '--id ', '--UUID': '--uuid '},
                    'CHVIOSBK': {'-T': ' -t ', '-M': ' -m ', '-P': ' -p ', '-F': ' -f ', '--ID': '--id ', '--UUID': '--uuid ', '-O': '-o ', '-A': '-a '},
-                   'CPVIOSIMG': {'-R': {'SFTP': ' -r sftp '}, '-N': ' -n ', '-H': ' -h ', '-U': ' -u ', '-F':' -f ', '--PASSWD': ' --passwd '},
+                   'CPVIOSIMG': {'-R': {'SFTP': ' -r sftp ', 'NFS': ' -r nfs '}, '-N': ' -n ', '-H': ' -h ', '-U': ' -u ', '-F':' -f ', '--PASSWD': ' --passwd ', '-K': ' -k ',
+                                 '-D': ' -d ', '-L':' -l ', '--OPTIONS':' --options '},
                    'RMVIOSIMG': {'-N': ' -n '}
                    }
 
