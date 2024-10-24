@@ -337,15 +337,18 @@ def validate_parameters(params):
 
     if opr == 'install':
         mandatoryList = ['hmc_host', 'hmc_auth', 'system_name', 'name', 'nim_IP', 'nim_gateway', 'vios_IP', 'nim_subnetmask']
-        unsupportedList = ['settings', 'virtual_optical_media', 'free_pvs']
+        unsupportedList = ['settings', 'virtual_optical_media', 'free_pvs', 'image_name', 'sftp_auth','server','files','mount_location','ssh_key_file',
+                           'remote_directory','options']
     elif opr == 'present':
         mandatoryList = ['hmc_host', 'hmc_auth', 'system_name', 'name']
         unsupportedList = ['nim_IP', 'nim_gateway', 'vios_IP', 'nim_subnetmask', 'prof_name',
-                           'location_code', 'nim_vlan_id', 'nim_vlan_priority', 'timeout', 'virtual_optical_media', 'free_pvs']
+                           'location_code', 'nim_vlan_id', 'nim_vlan_priority', 'timeout', 'virtual_optical_media', 'free_pvs', 'image_name', 'sftp_auth','server',
+                           'files','mount_location','ssh_key_file','remote_directory','options']
     elif opr == 'accept_license':
         mandatoryList = ['hmc_host', 'hmc_auth', 'system_name', 'name']
         unsupportedList = ['nim_IP', 'nim_gateway', 'vios_IP', 'nim_subnetmask', 'prof_name', 'location_code', 'nim_vlan_id', 'nim_vlan_priority',
-                           'timeout', 'settings', 'virtual_optical_media', 'free_pvs']
+                           'timeout', 'settings', 'virtual_optical_media','free_pvs', 'image_name', 'sftp_auth','server','files','mount_location',
+                           'ssh_key_file','remote_directory','options']
     elif opr == 'copy':
         mandatoryList = ['media']
         media = params['media'].lower()
@@ -355,16 +358,26 @@ def validate_parameters(params):
             if sftp_password and ssh_key_file:
                 raise ParameterError("Parameters 'sftp_password' and 'ssh_key_file' are mutually exculsive")
             mandatoryList += ['hmc_host', 'hmc_auth', 'image_name', 'sftp_auth','server','files']
-            unsupportedList = ['mount_location','options']
+            unsupportedList = ['system_name', 'name', 'mount_location','options','nim_IP', 'nim_gateway', 'vios_IP', 'nim_subnetmask', 'prof_name', 
+                               'location_code', 'nim_vlan_id', 'nim_vlan_priority','timeout', 'settings', 'virtual_optical_media', 'free_pvs']
         elif media == 'nfs':
             mandatoryList += ['hmc_host', 'hmc_auth', 'image_name','server','files','mount_location']
-            unsupportedList = ['sftp_auth','ssh_key_file']
+            unsupportedList = ['sftp_auth','ssh_key_file', 'system_name', 'name', 'nim_IP', 'nim_gateway', 'vios_IP', 'nim_subnetmask', 'prof_name', 
+                               'location_code', 'nim_vlan_id', 'nim_vlan_priority','timeout', 'settings', 'virtual_optical_media', 'free_pvs']
         else:
             raise ParameterError(f'Media type {media} is not supported')
+    elif opr == 'listimages':
+        mandatoryList = ['hmc_host', 'hmc_auth']
+        unsupportedList = ['ssh_key_file','remote_directory','image_name', 'sftp_auth','server','files','system_name', 'name', 'mount_location','options','nim_IP', 'nim_gateway', 'vios_IP', 'nim_subnetmask', 'prof_name', 'location_code', 'nim_vlan_id', 'nim_vlan_priority',
+                           'timeout', 'settings', 'virtual_optical_media', 'free_pvs','media']
+    elif opr == 'delete':
+        mandatoryList = ['hmc_host', 'hmc_auth', 'image_name']
+        unsupportedList = ['ssh_key_file','remote_directory','sftp_auth','server','files','system_name', 'name', 'mount_location','options','nim_IP', 'nim_gateway', 'vios_IP', 'nim_subnetmask', 'prof_name', 'location_code', 'nim_vlan_id', 'nim_vlan_priority',
+                           'timeout', 'settings', 'virtual_optical_media', 'free_pvs','media']
     else:
         mandatoryList = ['hmc_host', 'hmc_auth', 'system_name', 'name']
         unsupportedList = ['nim_IP', 'nim_gateway', 'vios_IP', 'nim_subnetmask', 'prof_name', 'location_code', 'nim_vlan_id', 'nim_vlan_priority',
-                           'timeout', 'settings']
+                           'timeout', 'settings', 'image_name', 'sftp_auth','server','files','mount_location','ssh_key_file','remote_directory','options']
 
     collate = []
     for eachMandatory in mandatoryList:
@@ -628,6 +641,7 @@ def list_all_vios_image(module, params):
     hmc_user = params['hmc_auth']['username']
     password = params['hmc_auth']['password']
     changed = False
+    validate_parameters(params)
     hmc_conn = HmcCliConnection(module, hmc_host, hmc_user, password)
     hmc = Hmc(hmc_conn)
 
@@ -664,7 +678,7 @@ def delete_vios_image(module, params):
     hmc_user = params['hmc_auth']['username']
     password = params['hmc_auth']['password']
     image_name = params['image_name']
-
+    validate_parameters(params)
     hmc_conn = HmcCliConnection(module, hmc_host, hmc_user, password)
     hmc = Hmc(hmc_conn)
 
