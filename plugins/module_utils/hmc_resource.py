@@ -826,7 +826,7 @@ class Hmc():
                 self.OPT['CPVIOSIMG']['-U'] + sftp_user +\
                 self.OPT['CPVIOSIMG']['-F'] + files
             if remote_directory:
-                cpviosimgCmd += self.OPT['CPVIOSIMG']['-d'] + remote_directory
+                cpviosimgCmd += self.OPT['CPVIOSIMG']['-D'] + remote_directory
             if sftp_password:
                 cpviosimgCmd += self.OPT['CPVIOSIMG']['--PASSWD'] + sftp_password
             elif ssh_key_file:
