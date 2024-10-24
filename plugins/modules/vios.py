@@ -47,15 +47,63 @@ options:
                 description:
                     - Password of the HMC.
                 type: str
+    sftp_auth:
+        description:
+            - Username and Password credential of the SFTP.
+        type: dict
+        suboptions:
+            username:
+                description:
+                    - Username of the SFTP to login.
+                type: str
+            password:
+                description:
+                    - Password of the SFTP.
+                type: str
     system_name:
         description:
             - The name of the managed system.
-        required: true
         type: str
     name:
         description:
             - The name of the VirtualIOServer.
-        required: true
+        type: str
+    image_name:
+        description:
+            - The name to give the VIOS installation image on the HMC.
+        type: str
+    media:
+        description:
+            - Media type for the VIOS installation (e.g., nfs, sftp, usb).
+        type: str
+    server:
+        description:
+            - The host name or IP address of the remote server.
+        type: str
+    files:
+        description:
+            - Specify one or two comma-separated VIOS ISO files. 
+            - For DVDs, list the first file first. Required for remote imports; not valid for USB.
+        type: str
+    ssh_key_file:
+        description:
+            - Specify the SSH private key file name. 
+            - If not fully qualified, it must be in the user's home directory on the HMC. 
+            - Use ssh-keygen to generate it. A passphrase prompts during HMC commands.
+        type: str
+    mount_location:
+         description:
+            - Required for VIOS image imports from NFS; specify the NFS server mount location.
+        type: str
+    remote_directory:
+        description:
+            - Specify the directory on the remote server for the VIOS installation image. 
+            - If not provided for SFTP, the user's home directory is used; for NFS, the mount location is used.
+        type: str
+    options:
+        description:
+            - Specify options for the NFS mount command in double quotes. 
+            - Default is version 3; use vers=4 for version 4. Valid only for VIOS image imports from NFS.
         type: str
     settings:
         description:
@@ -200,6 +248,53 @@ EXAMPLES = '''
     free_pvs: true
     virtual_optical_media: true
     state: facts
+
+- name: List all VIOS Images
+        ibm.power_hmc.vios:
+            hmc_host: '{{ inventory_hostname }}'
+            hmc_auth: "{{ curr_hmc_auth }}"
+            state: listimages
+        register: images_info
+
+- name: Stdout the VIOS Images Info
+        ansible.builtin.debug:
+            msg: '{{ images_info }}'
+
+- name: Copy Vios Image via SFTP
+        ibm.power_hmc.vios:
+              hmc_host: '{{ inventory_hostname }}'
+              hmc_auth: "{{ curr_hmc_auth }}"
+              media: sftp
+              image_name: img_name
+              server: server_IP
+              sftp_auth:
+                username: username
+                password: password
+              remote_directory: <directory_path>
+              files: <file_name>
+              action: copy
+        register: testout
+
+- name: Copy Vios Image via NFS
+        ibm.power_hmc.vios:
+              hmc_host: '{{ inventory_hostname }}'
+              hmc_auth: "{{ curr_hmc_auth }}"
+              media: sftp
+              image_name: img_name
+              server: server_IP
+              remote_directory: <directory_path>
+              mount_location: <mount_location>
+              files: <file_name>
+              options: <NFS_version>
+              action: copy
+        register: testout
+
+- name: Delete Vios Image
+        ibm.power_hmc.vios:
+              hmc_host: '{{ inventory_hostname }}'
+              hmc_auth: "{{ curr_hmc_auth }}"
+              image_name: <img_name>
+              action: delete
 '''
 
 RETURN = '''
@@ -242,19 +337,47 @@ def validate_parameters(params):
 
     if opr == 'install':
         mandatoryList = ['hmc_host', 'hmc_auth', 'system_name', 'name', 'nim_IP', 'nim_gateway', 'vios_IP', 'nim_subnetmask']
-        unsupportedList = ['settings', 'virtual_optical_media', 'free_pvs']
+        unsupportedList = ['settings', 'virtual_optical_media', 'free_pvs', 'image_name', 'sftp_auth','server','files','mount_location','ssh_key_file',
+                           'remote_directory','options']
     elif opr == 'present':
         mandatoryList = ['hmc_host', 'hmc_auth', 'system_name', 'name']
         unsupportedList = ['nim_IP', 'nim_gateway', 'vios_IP', 'nim_subnetmask', 'prof_name',
-                           'location_code', 'nim_vlan_id', 'nim_vlan_priority', 'timeout', 'virtual_optical_media', 'free_pvs']
+                           'location_code', 'nim_vlan_id', 'nim_vlan_priority', 'timeout', 'virtual_optical_media', 'free_pvs', 'image_name', 'sftp_auth','server',
+                           'files','mount_location','ssh_key_file','remote_directory','options']
     elif opr == 'accept_license':
         mandatoryList = ['hmc_host', 'hmc_auth', 'system_name', 'name']
         unsupportedList = ['nim_IP', 'nim_gateway', 'vios_IP', 'nim_subnetmask', 'prof_name', 'location_code', 'nim_vlan_id', 'nim_vlan_priority',
-                           'timeout', 'settings', 'virtual_optical_media', 'free_pvs']
+                           'timeout', 'settings', 'virtual_optical_media','free_pvs', 'image_name', 'sftp_auth','server','files','mount_location',
+                           'ssh_key_file','remote_directory','options']
+    elif opr == 'copy':
+        mandatoryList = ['media']
+        media = params['media'].lower()
+        if media == 'sftp':
+            sftp_password = params['sftp_auth']['password']
+            ssh_key_file = params['ssh_key_file']
+            if sftp_password and ssh_key_file:
+                raise ParameterError("Parameters 'sftp_password' and 'ssh_key_file' are mutually exculsive")
+            mandatoryList += ['hmc_host', 'hmc_auth', 'image_name', 'sftp_auth','server','files']
+            unsupportedList = ['system_name', 'name', 'mount_location','options','nim_IP', 'nim_gateway', 'vios_IP', 'nim_subnetmask', 'prof_name', 
+                               'location_code', 'nim_vlan_id', 'nim_vlan_priority','timeout', 'settings', 'virtual_optical_media', 'free_pvs']
+        elif media == 'nfs':
+            mandatoryList += ['hmc_host', 'hmc_auth', 'image_name','server','files','mount_location']
+            unsupportedList = ['sftp_auth','ssh_key_file', 'system_name', 'name', 'nim_IP', 'nim_gateway', 'vios_IP', 'nim_subnetmask', 'prof_name', 
+                               'location_code', 'nim_vlan_id', 'nim_vlan_priority','timeout', 'settings', 'virtual_optical_media', 'free_pvs']
+        else:
+            raise ParameterError(f'Media type {media} is not supported')
+    elif opr == 'listimages':
+        mandatoryList = ['hmc_host', 'hmc_auth']
+        unsupportedList = ['ssh_key_file','remote_directory','image_name', 'sftp_auth','server','files','system_name', 'name', 'mount_location','options','nim_IP', 'nim_gateway', 'vios_IP', 'nim_subnetmask', 'prof_name', 'location_code', 'nim_vlan_id', 'nim_vlan_priority',
+                           'timeout', 'settings', 'virtual_optical_media', 'free_pvs','media']
+    elif opr == 'delete':
+        mandatoryList = ['hmc_host', 'hmc_auth', 'image_name']
+        unsupportedList = ['ssh_key_file','remote_directory','sftp_auth','server','files','system_name', 'name', 'mount_location','options','nim_IP', 'nim_gateway', 'vios_IP', 'nim_subnetmask', 'prof_name', 'location_code', 'nim_vlan_id', 'nim_vlan_priority',
+                           'timeout', 'settings', 'virtual_optical_media', 'free_pvs','media']
     else:
         mandatoryList = ['hmc_host', 'hmc_auth', 'system_name', 'name']
         unsupportedList = ['nim_IP', 'nim_gateway', 'vios_IP', 'nim_subnetmask', 'prof_name', 'location_code', 'nim_vlan_id', 'nim_vlan_priority',
-                           'timeout', 'settings']
+                           'timeout', 'settings', 'image_name', 'sftp_auth','server','files','mount_location','ssh_key_file','remote_directory','options']
 
     collate = []
     for eachMandatory in mandatoryList:
@@ -513,6 +636,58 @@ def viosLicenseAccept(module, params):
 
     return changed, None, None
 
+def list_all_vios_image(module, params):
+    hmc_host = params['hmc_host']
+    hmc_user = params['hmc_auth']['username']
+    password = params['hmc_auth']['password']
+    changed = False
+    validate_parameters(params)
+    hmc_conn = HmcCliConnection(module, hmc_host, hmc_user, password)
+    hmc = Hmc(hmc_conn)
+
+    try:
+        vios_image_details = hmc.listViosImages()
+        changed = False
+        return changed, vios_image_details, None
+    except Exception as e:
+        module.fail_json(msg=str(e))
+
+def copy_vios_image(module, params):
+    hmc_host = params['hmc_host']
+    hmc_user = params['hmc_auth']['username']
+    password = params['hmc_auth']['password']
+    validate_parameters(params)
+    hmc_conn = HmcCliConnection(module, hmc_host, hmc_user, password)
+    hmc = Hmc(hmc_conn)
+
+    try:
+        image_name = params['image_name']
+        image = hmc.listViosImages(image_name=image_name)
+        if image:
+            module.exit_json(changed=False, msg=f"The VIOS image with name '{image_name}' already exists.")
+        else:
+            hmc.copyViosImage(params)
+            image = hmc.listViosImages(image_name=image_name)
+            if image:
+                module.exit_json(changed=True, msg=f"The VIOS image with name '{image_name}' has been copied successfully.")
+    except Exception as e:
+        module.fail_json(msg=str(e))
+
+def delete_vios_image(module, params):
+    hmc_host = params['hmc_host']
+    hmc_user = params['hmc_auth']['username']
+    password = params['hmc_auth']['password']
+    image_name = params['image_name']
+    validate_parameters(params)
+    hmc_conn = HmcCliConnection(module, hmc_host, hmc_user, password)
+    hmc = Hmc(hmc_conn)
+
+    try:
+        hmc.deleteViosImage(image_name)
+    except Exception as e:
+        module.fail_json(msg=str(e))
+
+    return True, None, None
 
 def perform_task(module):
     params = module.params
@@ -520,7 +695,10 @@ def perform_task(module):
         "facts": fetchViosInfo,
         "present": createVios,
         "install": installVios,
-        "accept_license": viosLicenseAccept
+        "accept_license": viosLicenseAccept,
+        "listimages": list_all_vios_image,
+        "copy": copy_vios_image,
+        "delete": delete_vios_image
     }
     oper = 'action'
     if params['action'] is None:
@@ -544,8 +722,23 @@ def run_module():
                           password=dict(type='str', no_log=True),
                       )
                       ),
-        system_name=dict(type='str', required=True),
-        name=dict(type='str', required=True),
+        sftp_auth=dict(type='dict',
+                       no_log=True,
+                       options=dict(
+                          username=dict(type='str'),
+                          password=dict(type='str', no_log=True),
+                      )
+                      ),
+        server = dict(type='str'),
+        image_name = dict(type='str'),
+        system_name=dict(type='str'),
+        name=dict(type='str'),
+        media=dict(type='str', choices=['nfs', 'sftp', 'usb']),
+        remote_directory=dict(type='str'),
+        mount_location=dict(type='str'),
+        ssh_key_file=dict(type='str'),
+        options=dict(type='str'),
+        files=dict(type='str'),
         settings=dict(type='dict'),
         nim_IP=dict(type='str'),
         nim_gateway=dict(type='str'),
@@ -558,8 +751,8 @@ def run_module():
         timeout=dict(type='int'),
         virtual_optical_media=dict(type='bool'),
         free_pvs=dict(type='bool'),
-        state=dict(type='str', choices=['facts', 'present']),
-        action=dict(type='str', choices=['install', 'accept_license']),
+        state=dict(type='str', choices=['facts', 'present', 'listimages']),
+        action=dict(type='str', choices=['install', 'accept_license', 'copy', 'delete']),
     )
 
     module = AnsibleModule(
@@ -568,8 +761,11 @@ def run_module():
         required_one_of=[('state', 'action')],
         required_if=[['state', 'facts', ['hmc_host', 'hmc_auth', 'system_name', 'name']],
                      ['state', 'present', ['hmc_host', 'hmc_auth', 'system_name', 'name']],
+                     ['state', 'listimages', ['hmc_host', 'hmc_auth']],
                      ['action', 'install', ['hmc_host', 'hmc_auth', 'system_name', 'name', 'nim_IP', 'nim_gateway', 'vios_IP', 'nim_subnetmask']],
                      ['action', 'accept_license', ['hmc_host', 'hmc_auth', 'system_name', 'name']],
+                     ['action', 'copy', ['hmc_host', 'hmc_auth', 'server', 'image_name']],
+                     ['action', 'delete', ['hmc_host', 'hmc_auth', 'image_name' ]],
                      ],
     )
 
