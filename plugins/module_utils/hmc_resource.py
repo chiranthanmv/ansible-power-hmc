@@ -839,7 +839,7 @@ class Hmc():
                 self.OPT['CPVIOSIMG']['-L'] + mount_location +\
                 self.OPT['CPVIOSIMG']['-F'] + files
             if remote_directory:
-                cpviosimgCmd += self.OPT['CPVIOSIMG']['-d'] + remote_directory
+                cpviosimgCmd += self.OPT['CPVIOSIMG']['-D'] + remote_directory
             if options:
                 cpviosimgCmd += self.OPT['CPVIOSIMG']['--OPTIONS'] + options
 
