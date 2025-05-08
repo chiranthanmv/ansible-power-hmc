@@ -67,12 +67,12 @@ options:
                 type: str
             vios_id:
                 description:
-                    - The ID of the VIOS to update/upgrade.
+                    - The ID of one or more VIOS to update/upgrade.
                       C(vios_id) and C(vios_name) are mutually exclusive.
                 type: str
             vios_name:
                 description:
-                    - The name of the VIOS to update/upgrade.
+                    - The name of one or more VIOS to update/upgrade.
                       C(vios_id) and C(vios_name) are mutually exclusive.
                 type: str
             image_name:
@@ -167,7 +167,7 @@ EXAMPLES = '''
       username: '{{ ansible_user }}'
       password: '{{ hmc_password }}'
     attributes:
-      vios_name: <vios_name>
+      vios_name: <vios_name1>,<vios_name2>
       system_name: <sys/MTMS>
     state: facts
 
@@ -179,7 +179,7 @@ EXAMPLES = '''
       password: '{{ hmc_password }}'
     attributes:
       repository: sftp
-      vios_id: <vios_id>
+      vios_id: <vios_id1>,<vios_id2>
       system_name: <sys/MTMS>
       password: <password>
       user_id: <username>
@@ -355,29 +355,47 @@ def facts(module, params, changed=False):
     hmc_conn = HmcCliConnection(module, hmc_host, hmc_user, password)
     hmc = Hmc(hmc_conn)
     vios_name = attributes['vios_name'] or attributes['vios_id']
+    vios_name = [item.strip() for item in vios_name.split(",")]
     m_system = attributes['system_name']
     sys_list = (
         hmc_conn.execute("lssyscfg -r sys -F name").splitlines() + hmc_conn.execute("lssyscfg -r sys -F type_model*serial_num").splitlines()
     )
+    versions = []
+    errors = []
     if m_system not in sys_list:
         module.fail_json(msg="The managed system is not available in HMC")
     else:
         vios_list = list(hmc_conn.execute("lssyscfg -r lpar -m {0} -F name,state,lpar_id".format(m_system)).splitlines())
-        if attributes['vios_name'] is not None:
-            vios_details = next((entry.split(',') for entry in vios_list if entry.split(',')[0] == vios_name), None)
-        elif attributes['vios_id'] is not None:
-            vios_details = next((entry.split(',') for entry in vios_list if entry.split(',')[2] == vios_name), None)
-        if vios_details:
-            if vios_details[1] != 'Running':
-                module.fail_json(msg="The VIOS is not in running state")
-        else:
-            module.fail_json(msg="The VIOS is not available in HMC")
-    version = hmc.getviosversion(configDict=attributes).strip()
-    version = {
-        "vios": vios_name,
-        "system": m_system,
-        "version": version}
-    return changed, version, None
+        for name in vios_name:
+            vios_details = None
+            temp_attr = attributes.copy()
+            if attributes.get('vios_name') is not None:
+                temp_attr['vios_name'] = name
+                temp_attr['vios_id'] = None
+                vios_details = next((entry.split(',') for entry in vios_list if entry.split(',')[0] == name), None)
+            else:
+                temp_attr['vios_id'] = name
+                temp_attr['vios_name'] = None
+                vios_details = next((entry.split(',') for entry in vios_list if entry.split(',')[2] == name), None)
+
+            if vios_details:
+                if vios_details[1] != 'Running':
+                    errors.append(f"The VIOS {name} is not in running state")
+                    continue
+            else:
+                errors.append(f"The VIOS {name} is not available in HMC")
+                continue
+            version = hmc.getviosversion(configDict=temp_attr).strip()
+            versions.append({
+                "vios": name,
+                "system": m_system,
+                "version": version
+            })
+    if errors:
+         module.fail_json(msg=", ".join(errors),
+                          versions=versions
+                          )
+    return changed, versions, None
 
 
 def ensure_update_upgrade(module, params):
@@ -389,8 +407,8 @@ def ensure_update_upgrade(module, params):
     attributes = params.get('attributes')
     hmc_conn = HmcCliConnection(module, hmc_host, hmc_user, password)
     hmc = Hmc(hmc_conn)
-    ig_1, curr_version, ig_2 = facts(module, params)
     vios_name = attributes['vios_name'] or attributes['vios_id']
+    vios_name = [item.strip() for item in vios_name.split(",")]
     m_system = attributes['system_name']
     sys_list = (
         hmc_conn.execute("lssyscfg -r sys -F name").splitlines() + hmc_conn.execute("lssyscfg -r sys -F type_model*serial_num").splitlines()
@@ -399,15 +417,20 @@ def ensure_update_upgrade(module, params):
         module.fail_json(msg="The managed system is not available in HMC")
     else:
         vios_list = list(hmc_conn.execute("lssyscfg -r lpar -m {0} -F name,state,lpar_id".format(m_system)).splitlines())
-        if attributes['vios_name'] is not None:
-            vios_details = next((entry.split(',') for entry in vios_list if entry.split(',')[0] == vios_name), None)
-        elif attributes['vios_id'] is not None:
-            vios_details = next((entry.split(',') for entry in vios_list if entry.split(',')[2] == vios_name), None)
-        if vios_details:
-            if vios_details[1] != 'Running':
-                module.fail_json(msg="The VIOS is not in running state")
-        else:
-            module.fail_json(msg="The VIOS is not available in HMC")
+        errors = []
+        for name in vios_name:
+            vios_details = None
+            if attributes['vios_name'] is not None:
+                vios_details = next((entry.split(',') for entry in vios_list if entry.split(',')[0] == name), None)
+            elif attributes['vios_id'] is not None:
+                vios_details = next((entry.split(',') for entry in vios_list if entry.split(',')[2] == name), None)
+            if vios_details:
+                if vios_details[1] != 'Running':
+                    errors.append(f"The VIOS {name} is not in running state.")
+            else:
+                errors.append(f"The VIOS {name} is not available in HMC.")
+    if errors:
+        module.fail_json(msg=", ".join(errors))
 
     if attributes['repository'] in ['nfs', 'sftp']:
         if attributes['save'] is not None and attributes['image_name'] is None:
@@ -418,21 +441,45 @@ def ensure_update_upgrade(module, params):
     attributes['disks'] = ','.join(attributes['disks']) if attributes.get('disks') else None
     attributes['option'] = '"ver={}"'.format(attributes["option"]) if attributes.get('option') else None
 
-    try:
-        hmc.updatevios(module.params['state'], configDict=attributes)
-    except HmcError as error:
-        if HmcConstants.USER_AUTHORITY_ERR in repr(error):
-            logger.debug(repr(error))
-            return False, None, None
+    versions = []
+    error_list=[]
+    for name in vios_name:
+        temp_attr = attributes.copy()
+        if attributes.get('vios_name') is not None:
+            temp_attr['vios_name'] = name
+            temp_attr['vios_id'] = None
         else:
-            raise
-    ig_1, latest_version, ig_2 = facts(module, params, changed)
-    if curr_version != latest_version:
-        changed = True
-    else:
-        msg = "The vios is already in required version"
-        module.exit_json(changed=changed, msg=msg)
-    return changed, latest_version, None
+            temp_attr['vios_id'] = name
+            temp_attr['vios_name'] = None
+        curr_version = hmc.getviosversion(configDict=temp_attr).strip()
+        try:
+            hmc.updatevios(module.params['state'], configDict=temp_attr)
+        except HmcError as error:
+            if HmcConstants.USER_AUTHORITY_ERR in repr(error):
+                error_list.append(f"User authority error for VIOS {name}: {repr(error)}")
+                continue
+            else:
+                error_list.append(f"Error updating VIOS {name}: {repr(error)}")
+                continue
+        latest_version = hmc.getviosversion(configDict=temp_attr).strip()
+        if curr_version != latest_version:
+            changed = True
+            version = {
+            "vios": name,
+            "system": m_system,
+            "version": latest_version
+            }
+            versions.append(version)
+        else:
+            error_list.append(f"The VIOS {name} is already in the required version.")
+
+    if error_list:
+        module.fail_json(
+            msg=", ".join(error_list),
+            changed=changed,
+            versions=versions
+        )
+    return changed, versions, None
 
 
 def perform_task(module):
