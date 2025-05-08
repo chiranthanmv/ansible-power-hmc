@@ -392,9 +392,7 @@ def facts(module, params, changed=False):
                 "version": version
             })
     if errors:
-         module.fail_json(msg=", ".join(errors),
-                          versions=versions
-                          )
+        module.fail_json(msg=", ".join(errors), versions=versions)
     return changed, versions, None
 
 
@@ -442,7 +440,7 @@ def ensure_update_upgrade(module, params):
     attributes['option'] = '"ver={}"'.format(attributes["option"]) if attributes.get('option') else None
 
     versions = []
-    error_list=[]
+    error_list = []
     for name in vios_name:
         temp_attr = attributes.copy()
         if attributes.get('vios_name') is not None:
@@ -465,9 +463,9 @@ def ensure_update_upgrade(module, params):
         if curr_version != latest_version:
             changed = True
             version = {
-            "vios": name,
-            "system": m_system,
-            "version": latest_version
+                "vios": name,
+                "system": m_system,
+                "version": latest_version
             }
             versions.append(version)
         else:
