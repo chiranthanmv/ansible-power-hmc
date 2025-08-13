@@ -977,7 +977,6 @@ def platform_update(module):
                                 key=lambda line_data: int(line_data.split(",")[2])
                             )
                             parts = latest_line.split(",")
-                            sysfirm_update['level'] = parts[2]
                             sysfirm_update['IsDestruptive'] = parts[4].strip().lower() == "disruptive"
                 if sysfirm_update.get('level') != "latest":
                     firm_level = str(sysfirm_update.get('level'))
