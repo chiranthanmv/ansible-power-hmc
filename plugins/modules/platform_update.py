@@ -135,6 +135,7 @@ options:
                     leave_partition_in_target:
                         description: Whether to keep the partition in the target after platform update.
                         type: bool
+                        default: False
             vios_update:
                 description:
                     - Configuration for updating Virtual I/O Servers.
@@ -269,7 +270,7 @@ EXAMPLES = '''
       partition_migration:
         - is_quick_evac: true
           destination_managed_system: "p920_system"
-          leave_partition_in_target: false
+          leave_partition_in_target: true
 
 - name: Update VIOS to latest available level from IBM Fix Central
   platform_update:
@@ -1153,7 +1154,7 @@ def run_module():
                     options=dict(
                         is_quick_evac=dict(type='bool'),
                         destination_managed_system=dict(type='str'),
-                        leave_partition_in_target=dict(type='bool')
+                        leave_partition_in_target=dict(type='bool', default=False)
                     )
                 ),
                 vios_update=dict(
