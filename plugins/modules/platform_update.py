@@ -1204,31 +1204,18 @@ def run_module():
         py_ver = sys.version_info[0]
         raise ParameterError("Unsupported Python version {0}, supported python version is 3 and above".format(py_ver))
 
-    ok_count = 0
-    failed_count = 0
-
     if module.params.get('state'):
         changed, info, warning = facts(module)
     else:
         changed, info, warning = platform_update(module)
-
         if info:
-            for data in info:
-                status = data.get('CurrentStatus')
-                if status == "COMPLETED_OK":
-                    ok_count += 1
-                elif status == "COMPLETED_WITH_ERROR":
-                    failed_count += 1
-
-            if failed_count > 0 and ok_count == 0:
-                module.fail_json(msg=info)
-
+            if all(data.get('CurrentStatus') == 'COMPLETED_WITH_ERROR' for data in info):
+                changed = False
         if compare_levels(before_update_level, after_update_level):
             changed = False
 
     result = {}
     result['changed'] = changed
-
     if info:
         result['command_output'] = info
 
