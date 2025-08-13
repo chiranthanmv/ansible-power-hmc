@@ -76,14 +76,14 @@ options:
                             - 'C(Update): Performs an update.'
                             - 'C(Upgrade): Performs an upgrade.'
                             - When set to C(Update) or C(Upgrade), the C(sriov_adapter_update) will be implicit.
-                            - When set to C(NoUpdate), C(resource_type), and C(level) are not required.
+                            - When set to C(NoUpdate), C(repository), and C(level) are not required.
                         type: str
                         choices: ['NoUpdate', 'Update', 'Upgrade']
                     update_order:
                         description:
                             - Optional order in which the update should be applied.
                         type: int
-                    resource_type:
+                    repository:
                         description:
                             - Specifies the source repository for the update image.
                             - currently only supports C(IBMWebsite).
@@ -265,7 +265,7 @@ EXAMPLES = '''
       system_firmware_update:
         update_type: Update
         update_order: 1
-        resource_type: IBMWebsite
+        repository: IBMWebsite
       partition_migration:
         - is_quick_evac: true
           destination_managed_system: "p920_system"
@@ -282,6 +282,7 @@ EXAMPLES = '''
       vios_update:
         - update_type: Update
           vios_name: "vios1"
+          vios_image_name: "name"
           update_order: 1
           resource_type: IBMWebsite
 
@@ -297,7 +298,7 @@ EXAMPLES = '''
         - update_type: NoUpdate
           vios_name: "vios1"
           update_order: 1
-          resource_type: IBMWebsite
+          repository: IBMWebsite
           io_adapter_update:
             - device:
                 - "device 1"
@@ -334,10 +335,12 @@ EXAMPLES = '''
         - update_type: Update
           vios_name: "vios1"
           update_order: 1
+          vios_image_name: "name"
           resource_type: IBMWebsite
         - update_type: Update
           vios_name: "vios2"
           update_order: 2
+          vios_image_name: "name"
           resource_type: IBMWebsite
 
 - name: Facts
@@ -459,20 +462,20 @@ def validate_parameters(params):
         mandatory = ['update_type', 'update_order']
         unsupported = [
             'is_quick_evac', 'destination_managed_system', 'leave_partition_in_target', 'vios_name',
-            'io_adapter_update', 'id', 'device', 'repository', 'hmc_host', 'hmc_auth', 'adapter_id',
+            'io_adapter_update', 'id', 'device', 'resource_type', 'hmc_host', 'hmc_auth', 'adapter_id',
             'subtype', 'system_name', 'vios_update', 'vios_image_name'
         ]
         update_type = sfw_update.get('update_type', '')
         if update_type:
             update_type = update_type.lower()
         sriov_updates = sfw_update.get('sriov_adapter_update', [])
-        resource_type = sfw_update.get('resource_type')
+        resource_type = sfw_update.get('repository')
 
         if update_type == 'noupdate':
             if not sriov_updates:
                 raise ParameterError("Missing parameter sriov_adapter_update for system_firmware_update")
             if resource_type:
-                sfw_update['resource_type'] = None
+                sfw_update['repository'] = None
             if sfw_update.get('level') != 'latest':
                 raise ParameterError("Parameter 'level' is not supported for system_firmware_update when update_type = 'NoUpdate'")
             sfw_update['level'] = None
@@ -928,7 +931,10 @@ def platform_update(module):
             updateType = sysfirm_update.get('update_type').lower()
             if updateType in ['update', 'upgrade']:
                 firm_level = sysfirm_update.get('level')
-                source_file = sysfirm_update.get('resource_type').lower()
+                source_file = sysfirm_update.get('repository').lower()
+                if source_file:
+                    sysfirm_update['repository'] = source_file
+                sysfirm_update['Type'] = 'sys'
                 output = rest_conn.LICQueryRepository(system_uuid, system_name, source_file,
                                                       type="sys", level=updateType)
                 check_response_exception(output, module)
@@ -941,7 +947,14 @@ def platform_update(module):
                         f"for the resource: {system_name} reason: {output.get('ParameterValue')}"
                     )
                     module.fail_json(msg=error_msg)
-                elif firm_level != 'latest' and firm_level not in output:
+                param_val = output.get('ParameterValue', '')
+                available_levels = []
+                if param_val:
+                    for line in param_val.splitlines():
+                        parts = line.split(",")
+                        if len(parts) >= 3:
+                            available_levels.append(parts[2].strip())
+                if firm_level != 'latest' and firm_level not in available_levels:
                     error_msg = (
                         f"Update file {firm_level} for the resource {system_name} "
                         f"is not found at the specified source location: {source_file}."
@@ -951,11 +964,28 @@ def platform_update(module):
                     if output.get('ParameterValue'):
                         output = output.get('ParameterValue')
                         lines = output.split("\n")
-                        for line in lines:
-                            parts = line.split(",")
-                            if firm_level != 'latest' and firm_level == parts[2]:
-                                sysfirm_update['IsDestruptive'] = True
-                                break
+                        sysfirm_update['IsDestruptive'] = False
+                        if firm_level != 'latest':
+                            for line in lines:
+                                parts = line.split(",")
+                                if firm_level == parts[2]:
+                                    sysfirm_update['IsDestruptive'] = parts[4].strip().lower() == "disruptive"
+                                    break
+                        else:
+                            latest_line = max(
+                                (line for line in lines if line.strip()),
+                                key=lambda line_data: int(line_data.split(",")[2])
+                            )
+                            parts = latest_line.split(",")
+                            sysfirm_update['level'] = parts[2]
+                            sysfirm_update['IsDestruptive'] = parts[4].strip().lower() == "disruptive"
+                if sysfirm_update.get('level') != "latest":
+                    firm_level = str(sysfirm_update.get('level'))
+                    if firm_level.isdigit():
+                        if len(firm_level) == 1:
+                            firm_level = "00" + firm_level
+                        elif len(firm_level) == 2:
+                            firm_level = "0" + firm_level
 
         # IO Adapter Update check
         if all_io_updates:
@@ -1105,7 +1135,7 @@ def run_module():
                     options=dict(
                         update_type=dict(type='str', choices=['NoUpdate', 'Update', 'Upgrade']),
                         update_order=dict(type='int'),
-                        resource_type=dict(type='str', choices=['IBMWebsite'], default='IBMWebsite'),
+                        repository=dict(type='str', choices=['IBMWebsite'], default='IBMWebsite'),
                         level=dict(type='str', default="latest"),
                         sriov_adapter_update=dict(
                             type='list',
