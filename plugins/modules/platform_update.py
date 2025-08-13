@@ -1206,7 +1206,6 @@ def run_module():
 
     ok_count = 0
     failed_count = 0
-    failed = 0
 
     if module.params.get('state'):
         changed, info, warning = facts(module)
@@ -1222,15 +1221,13 @@ def run_module():
                     failed_count += 1
 
             if failed_count > 0 and ok_count == 0:
-                failed = failed_count
+                module.fail_json(msg=info)
 
         if compare_levels(before_update_level, after_update_level):
             changed = False
 
-    result = {
-        'changed': changed,
-        'failed': failed
-    }
+    result = {}
+    result['changed'] = changed
 
     if info:
         result['command_output'] = info
