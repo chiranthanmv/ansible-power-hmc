@@ -828,17 +828,6 @@ def platform_update(module):
         if not system_uuid:
             module.fail_json(msg="Given system is not present")
 
-        # Partition Migration Checks
-        if attributes.get('partition_migration'):
-            partition_migration = attributes.get('partition_migration')
-            if len(partition_migration) > 1:
-                module.fail_json(
-                    msg=f"Only one partition migration entry is allowed. Found {len(partition_migration)} entries."
-                )
-            destination_system = partition_migration[0].get('destination_managed_system')
-            if destination_system not in [v for d in sys_list for v in d.values()]:
-                module.fail_json(msg=f"The {destination_system} managed system is not available in HMC")
-
         # System Readiness Check
         sysfirm_update = attributes.get("system_firmware_update", {})
         if sysfirm_update:
