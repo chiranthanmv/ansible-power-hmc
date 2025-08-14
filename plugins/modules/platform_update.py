@@ -828,6 +828,17 @@ def platform_update(module):
         if not system_uuid:
             module.fail_json(msg="Given system is not present")
 
+        # Partition Migration Checks
+        if attributes.get('partition_migration'):
+            partition_migration = attributes.get('partition_migration')
+            if len(partition_migration) > 1:
+                module.fail_json(
+                    msg=f"Only one partition migration entry is allowed. Found {len(partition_migration)} entries."
+                )
+            destination_system = partition_migration[0].get('destination_managed_system')
+            if destination_system not in [v for d in sys_list for v in d.values()]:
+                module.fail_json(msg=f"The {destination_system} managed system is not available in HMC")
+
         # System Readiness Check
         sysfirm_update = attributes.get("system_firmware_update", {})
         if sysfirm_update:
@@ -1193,18 +1204,34 @@ def run_module():
         py_ver = sys.version_info[0]
         raise ParameterError("Unsupported Python version {0}, supported python version is 3 and above".format(py_ver))
 
+    ok_count = 0
+    failed_count = 0
+    failed = 0
+
     if module.params.get('state'):
         changed, info, warning = facts(module)
     else:
         changed, info, warning = platform_update(module)
+
         if info:
-            if all(data.get('CurrentStatus') == 'COMPLETED_WITH_ERROR' for data in info):
-                changed = False
+            for data in info:
+                status = data.get('CurrentStatus')
+                if status == "COMPLETED_OK":
+                    ok_count += 1
+                elif status == "COMPLETED_WITH_ERROR":
+                    failed_count += 1
+
+            if failed_count > 0 and ok_count == 0:
+                failed = failed_count
+
         if compare_levels(before_update_level, after_update_level):
             changed = False
 
-    result = {}
-    result['changed'] = changed
+    result = {
+        'changed': changed,
+        'failed': failed
+    }
+
     if info:
         result['command_output'] = info
 
