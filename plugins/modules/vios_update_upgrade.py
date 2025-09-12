@@ -551,7 +551,6 @@ def run_module():
     result['info'] = info
     if warning:
         result['warning'] = warning
-
     module.exit_json(**result)
 
 
