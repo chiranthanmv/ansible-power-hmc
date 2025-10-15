@@ -16,7 +16,7 @@
           password: "{{ password_policy_hmc_password }}"
       state: facts
       policy_type: policies
-  register: password_policy_policy_check
+  register: password_policy_check
 
 - name: Create a new password policy in power HMC if the policy name doesn't exist
   ibm.power_hmc.hmc_pwdpolicy:
@@ -28,8 +28,8 @@
       policy_config: '{{ password_policy_configs }}'
       state: present
   when: >
-    password_policy_policy_check.policy_info | rejectattr('NAME', 'equalto', password_policy_name) | list | count ==
-    password_policy_policy_check.policy_info | length
+    password_policy_check.policy_info | rejectattr('NAME', 'equalto', password_policy_name) | list | count ==
+    password_policy_check.policy_info | length
 
 - name: Modify an existing password policy in power HMC if the policy name already exists
   ibm.power_hmc.hmc_pwdpolicy:
@@ -40,7 +40,7 @@
       policy_name: '{{ password_policy_name }}'
       policy_config: '{{ password_policy_configs }}'
       state: modified
-  when: password_policy_policy_check.policy_info | selectattr('NAME', 'equalto', password_policy_name) | list | count > 0
+  when: password_policy_check.policy_info | selectattr('NAME', 'equalto', password_policy_name) | list | count > 0
 
 - name: Activate the provided created/modified password policy in power HMC
   ibm.power_hmc.hmc_pwdpolicy:
