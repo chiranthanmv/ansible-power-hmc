@@ -95,8 +95,8 @@ module-lint:
 
 .PHONY: prep-collection
 prep-collection:
-	ansible-galaxy collection build
-	ansible-galaxy collection install ibm-power_hmc*
+	ansible-galaxy collection build -f
+	ansible-galaxy collection install ibm-power_hmc* -f
 
 .PHONY: unit-test
 unit-test: prep-collection
