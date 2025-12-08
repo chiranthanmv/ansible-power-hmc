@@ -35,7 +35,7 @@
 
 - name: Find MAC address for specific network
   ansible.builtin.set_fact:
-      redhat_linux_install_mac_address: "{{ item.redhat_linux_install_mac_address }}"
+      redhat_linux_install_mac_address: "{{ item.mac_address }}"
   when: item.virtual_network_name == redhat_linux_install_network_name
   loop: "{{ redhat_linux_install_facts_output.partition_info.VirtualNetworkAdapters }}"
 
@@ -235,19 +235,12 @@
   changed_when: false
   delegate_to: "{{ groups['pxe'][0] }}"
 
-- name: Print the value of dest_dir
-  run_once: true
-  ansible.builtin.debug:
-      msg: "Destination directory is: {{ redhat_linux_install_dest_dir }}"
-
 - name: Download files from /boot and /ppc directory in Repository Server to the PXE server tftp path(hardware address)
   run_once: true
   ansible.builtin.shell: >-
-    wget -r --reject="index.html*" --no-parent -nH
+    wget -r -nv --show-progress --reject="index.html*" --no-parent -nH
     --cut-dirs={{ redhat_linux_install_cut_dir.stdout | int + 1 }}
-    http://{{ hostvars[groups['repo'][0]].ansible_host }}:
-    {{ redhat_linux_install_repo_port }} /
-    {{ redhat_linux_install_repo_dir }}/boot/
+    http://{{ hostvars[groups['repo'][0]].ansible_host }}:{{ redhat_linux_install_repo_port }}/{{ redhat_linux_install_repo_dir }}/boot/
     -P {{ redhat_linux_install_dest_dir }}
 
   changed_when: false
@@ -257,11 +250,9 @@
 - name: Download files from /boot and /ppc directory in Repository Server to the PXE server tftp path(hardware address)
   run_once: true
   ansible.builtin.shell: >-
-    wget -r --reject="index.html*" --no-parent -nH
+    wget -r -nv --show-progress --reject="index.html*" --no-parent -nH
     --cut-dirs={{ redhat_linux_install_cut_dir.stdout | int + 1 }}
-    http://{{ hostvars[groups['repo'][0]].ansible_host }}:
-    {{ redhat_linux_install_repo_port }}/
-    {{ redhat_linux_install_repo_dir }}/ppc/
+    http://{{ hostvars[groups['repo'][0]].ansible_host }}:{{ redhat_linux_install_repo_port }}/{{ redhat_linux_install_repo_dir }}/ppc/
     -P {{ redhat_linux_install_dest_dir }}
 
   changed_when: false
