@@ -2602,11 +2602,11 @@ class HmcRestClient:
 
         # Optional SFTP connection parameters
         for param_name, param_value in [
-            ("hostname",  hostname),
-            ("username",  username),
-            ("password",  password),
+            ("hostname", hostname),
+            ("username", username),
+            ("password", password),
             ("directory", directory),
-            ("keyfile",   keyfile),
+            ("keyfile", keyfile),
         ]:
             if param_value:
                 job_parameters.append({
