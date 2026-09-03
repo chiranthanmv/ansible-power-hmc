@@ -1330,12 +1330,19 @@ def platform_update(module):
                             )
                             module.fail_json(msg=error_msg)
                         param_val = output.get('ParameterValue', '')
+                        logger.debug("SFTP LICQueryRepository ParameterValue raw: %s", repr(param_val))
+                        if not param_val or 'No results' in param_val:
+                            module.fail_json(msg=(
+                                f"No {updateType.upper()} firmware image found on SFTP server "
+                                f"{sftp_block.get('hostname')}:{sftp_block.get('directory', '')} "
+                                f"for the resource: {system_name}. "
+                                f"Verify the directory path and that firmware images are present."
+                            ))
                         available_levels = []
-                        if param_val:
-                            for line in param_val.splitlines():
-                                parts = line.split(",")
-                                if len(parts) >= 3:
-                                    available_levels.append(parts[2].strip())
+                        for line in param_val.splitlines():
+                            parts = line.split(",")
+                            if len(parts) >= 3:
+                                available_levels.append(parts[2].strip())
                         if firm_level != 'latest' and firm_level not in available_levels:
                             error_msg = (
                                 f"Update file {firm_level} for the resource {system_name} "
@@ -1343,23 +1350,14 @@ def platform_update(module):
                             )
                             module.fail_json(msg=error_msg)
                         else:
-                            if output.get('ParameterValue'):
-                                output = output.get('ParameterValue')
-                                lines = output.split("\n")
-                                sysfirm_update['IsDestruptive'] = False
-                                if firm_level != 'latest':
-                                    for line in lines:
-                                        parts = line.split(",")
-                                        if firm_level == parts[2]:
-                                            sysfirm_update['IsDestruptive'] = parts[4].strip().lower() == "disruptive"
-                                            break
-                                else:
-                                    latest_line = max(
-                                        (line for line in lines if line.strip()),
-                                        key=lambda line_data: int(line_data.split(",")[2])
-                                    )
-                                    parts = latest_line.split(",")
-                                    sysfirm_update['IsDestruptive'] = parts[4].strip().lower() == "disruptive"
+                            lines = param_val.split("\n")
+                            sysfirm_update['IsDestruptive'] = False
+                            if firm_level != 'latest':
+                                for line in lines:
+                                    parts = line.split(",")
+                                    if len(parts) > 4 and firm_level == parts[2]:
+                                        sysfirm_update['IsDestruptive'] = parts[4].strip().lower() == "disruptive"
+                                        break
                     else:
                         output = rest_conn.LICQueryRepository(system_uuid, system_name, source_file,
                                                               type="sys", level=updateType)
