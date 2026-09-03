@@ -1413,16 +1413,6 @@ def platform_update(module):
                                 firm_level = "0" + firm_level
                         sysfirm_update['level'] = firm_level
 
-                    # Normalise numeric level to 3-digit zero-padded string for HMC API
-                    if sysfirm_update.get('level') != "latest":
-                        firm_level = str(sysfirm_update.get('level'))
-                        if firm_level.isdigit():
-                            if len(firm_level) == 1:
-                                firm_level = "00" + firm_level
-                            elif len(firm_level) == 2:
-                                firm_level = "0" + firm_level
-                        sysfirm_update['level'] = firm_level
-
             # IO Adapter Update check — skip LICQueryRepository for SFTP
             if all_io_updates:
                 for io_update in all_io_updates:
